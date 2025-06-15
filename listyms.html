@@ -969,9 +969,6 @@
                             <p class="text-lg font-semibold text-gray-800">Calificación Cualitativa: <span class="text-purple-600">${qualitativeRating}</span></p>
                         </div>
                         <div class="flex gap-4 mt-6">
-                            <button id="save-evaluation-btn" class="flex-1 px-6 py-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-md shadow-md hover:from-teal-600 hover:to-cyan-700 transition duration-300 ease-in-out transform hover:scale-105">
-                                ${editingEvaluationId ? 'Actualizar Evaluación' : 'Guardar Evaluación'}
-                            </button>
                             <button id="reset-evaluation-btn" class="flex-1 px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 transition duration-300 ease-in-out transform hover:scale-105">
                                 Reiniciar Formulario
                             </button>
@@ -992,13 +989,10 @@
                     button.onclick = (e) => {
                         const criterionId = e.target.dataset.criterionId;
                         const levelId = e.target.dataset.levelId;
-                        evaluationScores = { ...evaluationScores, [criterionId]: levelId };
-                        calculateScores(); // Recalculate and update immediately
-                        renderEvaluationForm(); // Re-render to update selected state visually
+                        handleEvaluationChange(criterionId, levelId); // Call the change handler which now saves
                     };
                 });
 
-                document.getElementById('save-evaluation-btn').onclick = handleSaveEvaluation;
                 document.getElementById('reset-evaluation-btn').onclick = handleResetForm;
                 document.getElementById('prev-student-btn').onclick = handlePreviousStudent;
                 document.getElementById('next-student-btn').onclick = handleNextStudent;
@@ -1014,12 +1008,13 @@
                 evaluationScores = { ...evaluationScores, [criterionId]: levelId };
                 calculateScores();
                 renderEvaluationForm(); // Re-render to update button styles and scores
+                handleSaveEvaluation(); // Automatically save after a change
             };
 
             const handleSaveEvaluation = () => {
                 if (!selectedStudentIdLocal || !selectedChecklistId || !currentChecklist) {
-                    displayMessage('evaluation-message-container', 'Por favor, selecciona un estudiante y una lista de cotejo.', 'error');
-                    return;
+                    // displayMessage('evaluation-message-container', 'Por favor, selecciona un estudiante y una lista de cotejo.', 'error');
+                    return; // Don't show error if nothing selected, just don't save
                 }
 
                 const student = students.find(s => s.id === selectedStudentIdLocal);
@@ -1030,8 +1025,10 @@
 
                 const allEvaluated = currentChecklist.criteria.every(c => evaluationScores[c.id]);
                 if (!allEvaluated) {
-                    displayMessage('evaluation-message-container', 'Por favor, evalúa todos los criterios antes de guardar.', 'error');
-                    return;
+                    // Only display a message if all criteria are not met, but don't prevent saving partials if user navigates away.
+                    // This is more of a warning for the user than a hard block.
+                    // displayMessage('evaluation-message-container', 'Por favor, evalúa todos los criterios antes de guardar.', 'info');
+                    // return; // Do not return here, allow partial save
                 }
 
                 const evaluationData = {
@@ -1060,10 +1057,10 @@
 
                 if (editingEvaluationId) {
                     evaluations = evaluations.map(e => e.id === editingEvaluationId ? evaluationData : e);
-                    displayMessage('evaluation-message-container', 'Evaluación actualizada correctamente.', 'success');
+                    displayMessage('evaluation-message-container', 'Evaluación actualizada automáticamente.', 'success');
                 } else {
                     evaluations = [...evaluations, evaluationData];
-                    displayMessage('evaluation-message-container', 'Evaluación guardada correctamente.', 'success');
+                    displayMessage('evaluation-message-container', 'Evaluación guardada automáticamente.', 'success');
                 }
                 saveDataToLocalStorage();
                 renderSelectOptions(); // Update student list in case evaluated status changed
