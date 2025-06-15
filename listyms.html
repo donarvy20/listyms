@@ -1,1682 +1,1676 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Evaluación de Estudiantes</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
 
-// Define inline SVG icons as components
-const IconMenu = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <line x1="4" y1="12" x2="20" y2="12"></line>
-        <line x1="4" y1="6" x2="20" y2="6"></line>
-        <line x1="4" y1="18" x2="20" y2="18"></line>
-    </svg>
-);
+        /* Utility classes for page display */
+        .page-content {
+            display: none;
+        }
+        .page-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 flex flex-col">
 
-const IconX = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-);
-
-const IconHome = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-    </svg>
-);
-
-const IconUsers = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-    </svg>
-);
-
-const IconClipboardCheck = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-        <path d="M12 2v4"></path>
-        <path d="M12 16l2 2 4-4"></path>
-        <path d="M8 8H6"></path>
-        <path d="M8 12H6"></path>
-        <path d="M8 16H6"></path>
-    </svg>
-);
-
-const IconEdit = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-    </svg>
-);
-
-const IconFileText = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="16" y1="13" x2="8" y2="13"></line>
-        <line x1="16" y1="17" x2="8" y2="17"></line>
-        <line x1="10" y1="9" x2="8" y2="9"></line>
-    </svg>
-);
-
-const IconScrollText = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <path d="M22 10V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"></path>
-        <path d="M8 8h8"></path>
-        <path d="M8 12h8"></path>
-        <path d="M8 16h8"></path>
-    </svg>
-);
-
-const IconDownload = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-        <polyline points="7 10 12 15 17 10"></polyline>
-        <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-);
-
-
-// Context for application-wide data (no Firebase here)
-const AppContext = createContext(null);
-
-// Custom hook to manage global state with localStorage
-const useLocalStorageData = () => {
-    const [basicData, setBasicData] = useState({});
-    const [students, setStudents] = useState([]);
-    const [checklists, setChecklists] = useState([]);
-    const [evaluations, setEvaluations] = useState([]); // This will hold all evaluations
-    // New persistent states for Evaluation Module
-    const [selectedGroupId, setSelectedGroupId] = useState('');
-    const [selectedChecklistId, setSelectedChecklistId] = useState('');
-
-    useEffect(() => {
-        // Load data from localStorage on initial render
-        const storedBasicData = localStorage.getItem('evaluationApp_basicData');
-        if (storedBasicData) setBasicData(JSON.parse(storedBasicData));
-
-        const storedStudents = localStorage.getItem('evaluationApp_students');
-        if (storedStudents) setStudents(JSON.parse(storedStudents));
-
-        const storedChecklists = localStorage.getItem('evaluationApp_checklists');
-        if (storedChecklists) setChecklists(JSON.parse(storedChecklists));
-
-        const storedEvaluations = localStorage.getItem('evaluationApp_evaluations');
-        if (storedEvaluations) setEvaluations(JSON.parse(storedEvaluations));
-
-        const storedSelectedGroupId = localStorage.getItem('evaluationApp_selectedGroupId');
-        if (storedSelectedGroupId) setSelectedGroupId(storedSelectedGroupId);
-
-        const storedSelectedChecklistId = localStorage.getItem('evaluationApp_selectedChecklistId');
-        if (storedSelectedChecklistId) setSelectedChecklistId(storedSelectedChecklistId);
-
-    }, []);
-
-    // Effects to save data to localStorage whenever it changes
-    useEffect(() => {
-        localStorage.setItem('evaluationApp_basicData', JSON.stringify(basicData));
-    }, [basicData]);
-
-    useEffect(() => {
-        localStorage.setItem('evaluationApp_students', JSON.stringify(students));
-    }, [students]);
-
-    useEffect(() => {
-        localStorage.setItem('evaluationApp_checklists', JSON.stringify(checklists));
-    }, [checklists]);
-
-    useEffect(() => {
-        localStorage.setItem('evaluationApp_evaluations', JSON.stringify(evaluations));
-    }, [evaluations]);
-
-    // Save persistent evaluation module selections
-    useEffect(() => {
-        localStorage.setItem('evaluationApp_selectedGroupId', selectedGroupId);
-    }, [selectedGroupId]);
-
-    useEffect(() => {
-        localStorage.setItem('evaluationApp_selectedChecklistId', selectedChecklistId);
-    }, [selectedChecklistId]);
-
-
-    return {
-        basicData, setBasicData,
-        students, setStudents,
-        checklists, setChecklists,
-        evaluations, setEvaluations,
-        selectedGroupId, setSelectedGroupId,
-        selectedChecklistId, setSelectedChecklistId
-    };
-};
-
-// --- Componentes de la Aplicación ---
-
-// Modulo de Datos Básicos
-const BasicData = () => {
-    const { basicData, setBasicData } = useContext(AppContext);
-    const [institutionName, setInstitutionName] = useState(basicData.institutionName || '');
-    const [courseName, setCourseName] = useState(basicData.courseName || '');
-    const [teacherName, setTeacherName] = useState(basicData.teacherName || '');
-    const [date, setDate] = useState(basicData.date || new Date().toISOString().split('T')[0]);
-    const [learningSessionName, setLearningSessionName] = useState(basicData.learningSessionName || ''); // Now saved
-    const [message, setMessage] = useState({ text: '', type: '' });
-
-    // Update internal state when context basicData changes (e.g., on initial load)
-    useEffect(() => {
-        setInstitutionName(basicData.institutionName || '');
-        setCourseName(basicData.courseName || '');
-        setTeacherName(basicData.teacherName || '');
-        setDate(basicData.date || new Date().toISOString().split('T')[0]);
-        setLearningSessionName(basicData.learningSessionName || ''); // Update for new field
-    }, [basicData]);
-
-    const handleSaveBasicData = () => {
-        setBasicData({
-            institutionName,
-            courseName,
-            teacherName,
-            date,
-            learningSessionName // Now saved
-        });
-        setMessage({ text: "Datos básicos guardados correctamente.", type: 'success' });
-    };
-
-    return (
-        <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Datos Básicos</h2>
-            {message.text && (
-                <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {message.text}
-                </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label htmlFor="institution" className="block text-sm font-medium text-gray-700">Nombre de la Institución:</label>
-                    <input
-                        type="text"
-                        id="institution"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={institutionName}
-                        onChange={(e) => setInstitutionName(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="course" className="block text-sm font-medium text-gray-700">Curso:</label>
-                    <input
-                        type="text"
-                        id="course"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={courseName}
-                        onChange={(e) => setCourseName(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="teacher" className="block text-sm font-medium text-gray-700">Docente:</label>
-                    <input
-                        type="text"
-                        id="teacher"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={teacherName}
-                        onChange={(e) => setTeacherName(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700">Fecha:</label>
-                    <input
-                        type="date"
-                        id="date"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                    />
-                </div>
-                <div className="md:col-span-2">
-                    <label htmlFor="session" className="block text-sm font-medium text-gray-700">Nombre de la Sesión de Aprendizaje:</label>
-                    <input
-                        type="text"
-                        id="session"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={learningSessionName}
-                        onChange={(e) => setLearningSessionName(e.target.value)}
-                        placeholder="Ej: Sesión 1 - Matemática"
-                    />
-                </div>
-            </div>
-            <button
-                onClick={handleSaveBasicData}
-                className="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-md shadow-md hover:from-blue-600 hover:to-indigo-700 transition duration-300 ease-in-out transform hover:scale-105"
-            >
-                Guardar Datos Básicos
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-700 to-blue-800 text-white shadow-md p-4 flex items-center justify-between sticky top-0 z-10 rounded-b-lg">
+        <h1 class="text-xl md:text-3xl font-bold">
+            Gestión de Evaluación de Estudiantes
+        </h1>
+        <!-- Hamburger menu button -->
+        <button id="menu-toggle" class="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white" aria-label="Toggle navigation menu">
+            <svg id="menu-icon-open" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7">
+                <line x1="4" y1="12" x2="20" y2="12"></line>
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="4" y1="18" x2="20" y2="18"></line>
+            </svg>
+            <svg id="menu-icon-close" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7 hidden">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <!-- Desktop Navigation -->
+        <nav id="desktop-nav" class="hidden md:flex space-x-4">
+            <button id="nav-basicData" class="px-4 py-2 rounded-md transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Datos Básicos
             </button>
+            <button id="nav-studentManagement" class="px-4 py-2 rounded-md transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Estudiantes
+            </button>
+            <button id="nav-checklistManagement" class="px-4 py-2 rounded-md transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                    <path d="M12 2v4"></path>
+                    <path d="M12 16l2 2 4-4"></path>
+                    <path d="M8 8H6"></path>
+                    <path d="M8 12H6"></path>
+                    <path d="M8 16H6"></path>
+                </svg>
+                Listas de Cotejo
+            </button>
+            <button id="nav-evaluation" class="px-4 py-2 rounded-md transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Evaluación
+            </button>
+            <button id="nav-reportModule" class="px-4 py-2 rounded-md transition duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <line x1="10" y1="9" x2="8" y2="9"></line>
+                </svg>
+                Reportes
+            </button>
+        </nav>
+    </header>
+
+    <!-- Mobile Navigation (Hamburger Menu) -->
+    <nav id="mobile-nav" class="md:hidden bg-indigo-700 text-white shadow-lg py-2 rounded-b-lg hidden">
+        <ul class="flex flex-col items-start px-4">
+            <li>
+                <button data-page="basicData" class="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Datos Básicos
+                </button>
+            </li>
+            <li>
+                <button data-page="studentManagement" class="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Gestión de Estudiantes
+                </button>
+            </li>
+            <li>
+                <button data-page="checklistManagement" class="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <path d="M12 2v4"></path>
+                        <path d="M12 16l2 2 4-4"></path>
+                        <path d="M8 8H6"></path>
+                        <path d="M8 12H6"></path>
+                        <path d="M8 16H6"></path>
+                    </svg>
+                    Listas de Cotejo
+                </button>
+            </li>
+            <li>
+                <button data-page="evaluation" class="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Módulo de Evaluación
+                </button>
+            </li>
+            <li>
+                <button data-page="reportModule" class="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="10" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                    Reportes Docente
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 md:p-8">
+        <h2 id="page-title" class="text-3xl font-extrabold text-gray-800 mb-6 border-b-2 border-indigo-300 pb-2"></h2>
+        <div id="content-area">
+            <!-- Page content will be rendered here by JavaScript -->
+            <div id="basicData-page" class="page-content"></div>
+            <div id="studentManagement-page" class="page-content"></div>
+            <div id="checklistManagement-page" class="page-content"></div>
+            <div id="evaluation-page" class="page-content"></div>
+            <div id="reportModule-page" class="page-content"></div>
         </div>
-    );
-};
+    </main>
 
-// Modulo de Gestión de Estudiantes
-const StudentManagement = () => {
-    const { students, setStudents, evaluations, setEvaluations } = useContext(AppContext);
-    const [studentDataInput, setStudentDataInput] = useState('');
-    const [studentGroupInput, setStudentGroupInput] = useState(''); // New state for group input
-    const [message, setMessage] = useState({ text: '', type: '' }); // type: 'success' or 'error'
-    const [selectedGroupToManage, setSelectedGroupToManage] = useState(''); // For managing existing groups
-    const [newGroupNameToRename, setNewGroupNameToRename] = useState(''); // For renaming groups
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center p-4 rounded-t-lg">
+        <p>&copy; <span id="current-year"></span> Aplicación de Evaluación de Estudiantes. Desarrollado por YJMS. Todos los derechos reservados.</p>
+    </footer>
 
+    <script>
+        // Global State Variables
+        let basicData = {};
+        let students = [];
+        let checklists = [];
+        let evaluations = [];
+        let selectedGroupId = '';
+        let selectedChecklistId = '';
+        let currentPage = 'basicData'; // Initial page
+        let arePdfLibsLoaded = false;
+        let editingChecklistId = null; // For checklist editing state
+        let editingEvaluationId = null; // For evaluation editing state
 
-    const handleParseAndAddStudents = () => {
-        const lines = studentDataInput.split('\n').filter(line => line.trim() !== '');
-        const newStudentsToAdd = [];
+        // Page Titles Mapping
+        const pageTitles = {
+            basicData: 'Datos Básicos',
+            studentManagement: 'Gestión de Estudiantes',
+            checklistManagement: 'Listas de Cotejo',
+            evaluation: 'Módulo de Evaluación',
+            reportModule: 'Reportes Docente'
+        };
 
-        for (const line of lines) {
-            let fullName = '';
-            let group = studentGroupInput.trim(); // Default group from input field
-            let dni = crypto.randomUUID().substring(0, 8); // Auto-generate a DNI for each student
+        // Utility: Generate UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
 
-            // Try tab-separated (FullName \t Group)
-            let parts = line.split('\t').map(p => p.trim());
-            if (parts.length >= 1) { // Changed from 2 to 1 for just full name
-                fullName = parts[0];
-                if (parts.length >= 2) { // Changed from 3 to 2 for group
-                    group = parts[1]; // Override group if provided in line
+        // --- Local Storage Management ---
+        function loadDataFromLocalStorage() {
+            const storedBasicData = localStorage.getItem('evaluationApp_basicData');
+            if (storedBasicData) basicData = JSON.parse(storedBasicData);
+
+            const storedStudents = localStorage.getItem('evaluationApp_students');
+            if (storedStudents) students = JSON.parse(storedStudents);
+
+            const storedChecklists = localStorage.getItem('evaluationApp_checklists');
+            if (storedChecklists) checklists = JSON.parse(storedChecklists);
+
+            const storedEvaluations = localStorage.getItem('evaluationApp_evaluations');
+            if (storedEvaluations) evaluations = JSON.parse(storedEvaluations);
+
+            const storedSelectedGroupId = localStorage.getItem('evaluationApp_selectedGroupId');
+            if (storedSelectedGroupId) selectedGroupId = storedSelectedGroupId;
+
+            const storedSelectedChecklistId = localStorage.getItem('evaluationApp_selectedChecklistId');
+            if (storedSelectedChecklistId) selectedChecklistId = storedSelectedChecklistId;
+        }
+
+        function saveDataToLocalStorage() {
+            localStorage.setItem('evaluationApp_basicData', JSON.stringify(basicData));
+            localStorage.setItem('evaluationApp_students', JSON.stringify(students));
+            localStorage.setItem('evaluationApp_checklists', JSON.stringify(checklists));
+            localStorage.setItem('evaluationApp_evaluations', JSON.stringify(evaluations));
+            localStorage.setItem('evaluationApp_selectedGroupId', selectedGroupId);
+            localStorage.setItem('evaluationApp_selectedChecklistId', selectedChecklistId);
+        }
+
+        // --- Message Display Utility ---
+        function displayMessage(containerId, text, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            let messageDiv = container.querySelector('.message-alert');
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.className = 'message-alert p-3 mb-4 rounded-md';
+                container.prepend(messageDiv);
+            }
+            messageDiv.textContent = text;
+            messageDiv.className = `message-alert p-3 mb-4 rounded-md ${type === 'success' ? 'bg-green-100 text-green-700' : (type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700')}`;
+            // Optional: Hide message after some time
+            setTimeout(() => {
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
                 }
-            } else {
-                // Try comma-separated (FullName, Group)
-                parts = line.split(',').map(p => p.trim());
-                if (parts.length >= 1) {
-                    fullName = parts[0];
-                    if (parts.length >= 2) {
-                        group = parts[1];
-                    }
+            }, 5000);
+        }
+
+
+        // --- Render Functions for Each Page ---
+
+        function renderPage() {
+            // Hide all pages first
+            document.querySelectorAll('.page-content').forEach(page => page.classList.remove('active'));
+
+            // Show the active page
+            const activePageElement = document.getElementById(`${currentPage}-page`);
+            if (activePageElement) {
+                activePageElement.classList.add('active');
+                document.getElementById('page-title').textContent = pageTitles[currentPage];
+            }
+
+            // Call specific render function for the active page
+            switch (currentPage) {
+                case 'basicData':
+                    renderBasicDataPage();
+                    break;
+                case 'studentManagement':
+                    renderStudentManagementPage();
+                    break;
+                case 'checklistManagement':
+                    renderChecklistManagementPage();
+                    break;
+                case 'evaluation':
+                    renderEvaluationModulePage();
+                    break;
+                case 'reportModule':
+                    renderReportModulePage();
+                    break;
+            }
+
+            // Update navigation button styles
+            document.querySelectorAll('nav button').forEach(button => {
+                const buttonPage = button.id ? button.id.replace('nav-', '') : button.dataset.page;
+                if (buttonPage === currentPage) {
+                    button.classList.add('bg-white', 'text-indigo-700', 'font-semibold', 'shadow');
+                    button.classList.remove('text-white', 'hover:bg-indigo-600');
                 } else {
-                    // Try semicolon-separated (FullName; Group)
-                    parts = line.split(';').map(p => p.trim());
+                    button.classList.remove('bg-white', 'text-indigo-700', 'font-semibold', 'shadow');
+                    button.classList.add('text-white', 'hover:bg-indigo-600');
+                }
+            });
+        }
+
+        // --- Basic Data Module ---
+        function renderBasicDataPage() {
+            const pageDiv = document.getElementById('basicData-page');
+            pageDiv.innerHTML = `
+                <div class="p-6 bg-white rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Datos Básicos</h2>
+                    <div id="basic-data-message-container"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label htmlFor="institution" class="block text-sm font-medium text-gray-700">Nombre de la Institución:</label>
+                            <input type="text" id="institution" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        </div>
+                        <div>
+                            <label htmlFor="course" class="block text-sm font-medium text-gray-700">Curso:</label>
+                            <input type="text" id="course" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        </div>
+                        <div>
+                            <label htmlFor="teacher" class="block text-sm font-medium text-gray-700">Docente:</label>
+                            <input type="text" id="teacher" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        </div>
+                        <div>
+                            <label htmlFor="date" class="block text-sm font-medium text-gray-700">Fecha:</label>
+                            <input type="date" id="date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                        </div>
+                        <div class="md:col-span-2">
+                            <label htmlFor="session" class="block text-sm font-medium text-gray-700">Nombre de la Sesión de Aprendizaje:</label>
+                            <input type="text" id="session" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ej: Sesión 1 - Matemática" />
+                        </div>
+                    </div>
+                    <button id="save-basic-data" class="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-md shadow-md hover:from-blue-600 hover:to-indigo-700 transition duration-300 ease-in-out transform hover:scale-105">
+                        Guardar Datos Básicos
+                    </button>
+                </div>
+            `;
+
+            // Populate fields with current data
+            document.getElementById('institution').value = basicData.institutionName || '';
+            document.getElementById('course').value = basicData.courseName || '';
+            document.getElementById('teacher').value = basicData.teacherName || '';
+            document.getElementById('date').value = basicData.date || new Date().toISOString().split('T')[0];
+            document.getElementById('session').value = basicData.learningSessionName || '';
+
+            // Add event listener
+            document.getElementById('save-basic-data').onclick = () => {
+                basicData = {
+                    institutionName: document.getElementById('institution').value,
+                    courseName: document.getElementById('course').value,
+                    teacherName: document.getElementById('teacher').value,
+                    date: document.getElementById('date').value,
+                    learningSessionName: document.getElementById('session').value
+                };
+                saveDataToLocalStorage();
+                displayMessage('basic-data-message-container', "Datos básicos guardados correctamente.", 'success');
+            };
+        }
+
+        // --- Student Management Module ---
+        function renderStudentManagementPage() {
+            const pageDiv = document.getElementById('studentManagement-page');
+            pageDiv.innerHTML = `
+                <div class="p-6 bg-white rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Gestión de Estudiantes</h2>
+                    <div id="student-management-message-container"></div>
+                    <div class="mb-4">
+                        <label htmlFor="studentData" class="block text-sm font-medium text-gray-700 mb-2">
+                            Copia y pega los datos de los estudiantes (Nombre Completo - separados por tabulador, coma o punto y coma). Opcionalmente, añade el Grupo:
+                        </label>
+                        <textarea id="studentData" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-32" placeholder="Ej:&#10;Juan Pérez&#9;Inicial I&#10;Maria García&#9;Matemática V"></textarea>
+                        <div class="mt-4">
+                            <label htmlFor="studentGroup" class="block text-sm font-medium text-gray-700">Grupo General para todos los estudiantes a añadir (Opcional):</label>
+                            <input type="text" id="studentGroup" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ej: Inicial I" />
+                        </div>
+                    </div>
+                    <button id="add-students-btn" class="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold rounded-md shadow-md hover:from-green-600 hover:to-teal-700 transition duration-300 ease-in-out transform hover:scale-105 mb-6">
+                        Agregar Estudiantes
+                    </button>
+
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Grupos Existentes:</h3>
+                    <div id="grouped-students-list" class="divide-y divide-gray-300 border border-gray-200 rounded-md mb-6"></div>
+
+                    <h3 class="text-xl font-semibold mt-8 mb-4 text-gray-700">Gestionar Grupos:</h3>
+                    <div class="border p-4 rounded-md bg-gray-50 mb-6">
+                        <div class="mb-4">
+                            <label htmlFor="selectGroupToManage" class="block text-sm font-medium text-gray-700">Seleccionar Grupo:</label>
+                            <select id="selectGroupToManage" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
+                        </div>
+                        <div class="mb-4">
+                            <label htmlFor="newGroupNameToRename" class="block text-sm font-medium text-gray-700">Nuevo Nombre del Grupo (para renombrar):</label>
+                            <input type="text" id="newGroupNameToRename" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Ej: Nuevo Grupo de Inicial I" disabled />
+                        </div>
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <button id="rename-group-btn" class="flex-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-md shadow-md hover:from-blue-600 hover:to-indigo-700 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Renombrar Grupo
+                            </button>
+                            <button id="delete-group-btn" class="flex-1 px-6 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-md shadow-md hover:from-red-600 hover:to-rose-700 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                Eliminar Grupo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const studentDataInput = document.getElementById('studentData');
+            const studentGroupInput = document.getElementById('studentGroup');
+            const addStudentsBtn = document.getElementById('add-students-btn');
+            const groupedStudentsList = document.getElementById('grouped-students-list');
+            const selectGroupToManage = document.getElementById('selectGroupToManage');
+            const newGroupNameToRenameInput = document.getElementById('newGroupNameToRename');
+            const renameGroupBtn = document.getElementById('rename-group-btn');
+            const deleteGroupBtn = document.getElementById('delete-group-btn');
+
+            addStudentsBtn.onclick = () => {
+                const lines = studentDataInput.value.split('\n').filter(line => line.trim() !== '');
+                const newStudentsToAdd = [];
+
+                for (const line of lines) {
+                    let fullName = '';
+                    let group = studentGroupInput.value.trim();
+                    let dni = generateUUID().substring(0, 8);
+
+                    let parts = line.split('\t').map(p => p.trim());
                     if (parts.length >= 1) {
                         fullName = parts[0];
                         if (parts.length >= 2) {
                             group = parts[1];
                         }
                     } else {
-                        // If only full name is provided without separators, take the whole line
-                        fullName = line.trim();
+                        parts = line.split(',').map(p => p.trim());
+                        if (parts.length >= 1) {
+                            fullName = parts[0];
+                            if (parts.length >= 2) {
+                                group = parts[1];
+                            }
+                        } else {
+                            parts = line.split(';').map(p => p.trim());
+                            if (parts.length >= 1) {
+                                fullName = parts[0];
+                                if (parts.length >= 2) {
+                                    group = parts[1];
+                                }
+                            } else {
+                                fullName = line.trim();
+                            }
+                        }
+                    }
+
+                    if (fullName) {
+                        if (!students.some(s => s.fullName === fullName && s.group === group)) {
+                            newStudentsToAdd.push({ id: generateUUID(), dni, fullName, group });
+                        } else {
+                            console.log(`Estudiante con nombre completo '${fullName}' y grupo '${group}' ya existe, omitiendo.`);
+                        }
                     }
                 }
-            }
 
-            if (fullName) {
-                // Check for duplicates based on fullName (and group for better accuracy) before adding
-                // We are not checking DNI for duplicates as it's auto-generated
-                if (!students.some(s => s.fullName === fullName && s.group === group)) {
-                    newStudentsToAdd.push({ id: crypto.randomUUID(), dni, fullName, group });
-                } else {
-                    console.log(`Estudiante con nombre completo '${fullName}' y grupo '${group}' ya existe, omitiendo.`);
+                if (newStudentsToAdd.length === 0) {
+                    displayMessage('student-management-message-container', 'No se encontraron estudiantes válidos para agregar o ya existen. Asegúrate de que los datos estén en formato Nombre Completo[tab]Grupo, o Nombre Completo,Grupo, o Nombre Completo;Grupo. El campo Grupo es opcional en la línea, pero puedes definir un grupo general arriba.', 'error');
+                    return;
                 }
-            }
-        }
 
-        if (newStudentsToAdd.length === 0) {
-            setMessage({ text: 'No se encontraron estudiantes válidos para agregar o ya existen. Asegúrate de que los datos estén en formato Nombre Completo[tab]Grupo, o Nombre Completo,Grupo, o Nombre Completo;Grupo. El campo Grupo es opcional en la línea, pero puedes definir un grupo general arriba.', type: 'error' });
-            return;
-        }
+                students = [...students, ...newStudentsToAdd];
+                studentDataInput.value = '';
+                saveDataToLocalStorage();
+                displayMessage('student-management-message-container', `Se agregaron ${newStudentsToAdd.length} estudiantes nuevos.`, 'success');
+                renderStudentManagementPage(); // Re-render to update the lists
+            };
 
-        setStudents([...students, ...newStudentsToAdd]);
-        setStudentDataInput('');
-        // setStudentGroupInput(''); // Optionally clear group input too
-        setMessage({ text: `Se agregaron ${newStudentsToAdd.length} estudiantes nuevos.`, type: 'success' });
-    };
+            const groupedStudents = students.reduce((acc, student) => {
+                const groupName = student.group || 'Sin Grupo';
+                if (!acc[groupName]) {
+                    acc[groupName] = [];
+                }
+                acc[groupName].push(student);
+                return acc;
+            }, {});
 
-    // No longer needed since individual student management is removed from this module
-    // const handleDeleteStudent = (id) => {
-    //     setStudents(students.filter(student => student.id !== id));
-    //     // Also remove any evaluations associated with this student
-    //     setEvaluations(prevEvaluations => prevEvaluaciones.filter(evalItem => evalItem.studentId !== id));
-    //     setMessage({ text: 'Estudiante eliminado.', type: 'success' });
-    // };
+            const uniqueGroups = [...new Set(students.map(student => student.group || 'Sin Grupo'))].sort((a, b) => {
+                if (a === 'Sin Grupo') return 1;
+                if (b === 'Sin Grupo') return -1;
+                return a.localeCompare(b);
+            });
 
-    const handleRenameGroup = () => {
-        if (!selectedGroupToManage || !newGroupNameToRename.trim()) {
-            setMessage({ text: 'Por favor, selecciona un grupo y proporciona un nuevo nombre.', type: 'error' });
-            return;
-        }
-        if (selectedGroupToManage === newGroupNameToRename.trim()) {
-            setMessage({ text: 'El nuevo nombre del grupo es el mismo que el actual.', type: 'info' });
-            return;
-        }
-        if (uniqueGroups.includes(newGroupNameToRename.trim())) {
-            setMessage({ text: `Ya existe un grupo con el nombre "${newGroupNameToRename.trim()}".`, type: 'error' });
-            return;
-        }
-
-        setStudents(prevStudents => prevStudents.map(student =>
-            (student.group || 'Sin Grupo') === selectedGroupToManage
-                ? { ...student, group: newGroupNameToRename.trim() }
-                : student
-        ));
-
-        setEvaluations(prevEvaluations => prevEvaluations.map(evalItem =>
-            (evalItem.studentGroup || 'Sin Grupo') === selectedGroupToManage
-                ? { ...evalItem, studentGroup: newGroupNameToRename.trim() }
-                : evalItem
-        ));
-
-        setMessage({ text: `Grupo "${selectedGroupToManage}" renombrado a "${newGroupNameToRename.trim()}" correctamente.`, type: 'success' });
-        setSelectedGroupToManage('');
-        setNewGroupNameToRename('');
-    };
-
-    const handleDeleteGroup = () => {
-        if (!selectedGroupToManage) {
-            setMessage({ text: 'Por favor, selecciona un grupo para eliminar.', type: 'error' });
-            return;
-        }
-        // Filter out students belonging to the selected group
-        const remainingStudents = students.filter(student => (student.group || 'Sin Grupo') !== selectedGroupToManage);
-        setStudents(remainingStudents);
-
-        // Filter out evaluations associated with students from the deleted group
-        const studentsInDeletedGroupIds = students
-            .filter(student => (student.group || 'Sin Grupo') === selectedGroupToManage)
-            .map(student => student.id);
-        
-        setEvaluations(prevEvaluations => prevEvaluations.filter(evalItem => !studentsInDeletedGroupIds.includes(evalItem.studentId)));
-
-
-        setMessage({ text: `Grupo "${selectedGroupToManage}" y todos sus estudiantes y evaluaciones asociadas eliminados correctamente.`, type: 'success' });
-        setSelectedGroupToManage('');
-        setNewGroupNameToRename('');
-    };
-
-
-    // Group students by their 'group' property
-    const groupedStudents = students.reduce((acc, student) => {
-        const groupName = student.group || 'Sin Grupo'; // Use 'Sin Grupo' for students without a group
-        if (!acc[groupName]) {
-            acc[groupName] = [];
-        }
-        acc[groupName].push(student);
-        return acc;
-    }, {});
-
-    const uniqueGroups = [...new Set(students.map(student => student.group || 'Sin Grupo'))].sort((a, b) => {
-        if (a === 'Sin Grupo') return 1; // 'Sin Grupo' comes last
-        if (b === 'Sin Grupo') return -1;
-        return a.localeCompare(b);
-    });
-
-
-    return (
-        <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Gestión de Estudiantes</h2>
-            {message.text && (
-                <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {message.text}
-                </div>
-            )}
-            <div className="mb-4">
-                <label htmlFor="studentData" className="block text-sm font-medium text-gray-700 mb-2">
-                    Copia y pega los datos de los estudiantes (Nombre Completo - separados por tabulador, coma o punto y coma). Opcionalmente, añade el Grupo:
-                </label>
-                <textarea
-                    id="studentData"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm h-32"
-                    value={studentDataInput}
-                    onChange={(e) => setStudentDataInput(e.target.value)}
-                    placeholder="Ej:&#10;Juan Pérez&#9;Inicial I&#10;Maria García&#9;Matemática V"
-                ></textarea>
-                <div className="mt-4">
-                    <label htmlFor="studentGroup" className="block text-sm font-medium text-gray-700">Grupo General para todos los estudiantes a añadir (Opcional):</label>
-                    <input
-                        type="text"
-                        id="studentGroup"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={studentGroupInput}
-                        onChange={(e) => setStudentGroupInput(e.target.value)}
-                        placeholder="Ej: Inicial I"
-                    />
-                </div>
-            </div>
-            <button
-                onClick={handleParseAndAddStudents}
-                className="w-full md:w-auto px-6 py-2 bg-gradient-to-r from-green-500 to-teal-600 text-white font-semibold rounded-md shadow-md hover:from-green-600 hover:to-teal-700 transition duration-300 ease-in-out transform hover:scale-105 mb-6"
-            >
-                Agregar Estudiantes
-            </button>
-
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">Grupos Existentes:</h3>
-            {uniqueGroups.length === 0 ? (
-                <p className="text-gray-500">No hay grupos registrados.</p>
-            ) : (
-                <div className="divide-y divide-gray-300 border border-gray-200 rounded-md mb-6">
-                    {uniqueGroups.map(groupName => (
-                        <div key={groupName} className="p-4 bg-gray-100 last:rounded-b-md">
-                            <div className="flex justify-between items-center">
-                                <h4 className="text-lg font-semibold text-gray-800">
-                                    {groupName} <span className="font-normal text-gray-600">({groupedStudents[groupName]?.length || 0} estudiantes)</span>
-                                </h4>
-                            </div>
+            if (uniqueGroups.length === 0) {
+                groupedStudentsList.innerHTML = '<p class="text-gray-500 p-4">No hay grupos registrados.</p>';
+                selectGroupToManage.innerHTML = '<option value="">-- Selecciona un Grupo --</option>';
+            } else {
+                groupedStudentsList.innerHTML = uniqueGroups.map(groupName => `
+                    <div class="p-4 bg-gray-100 last:rounded-b-md">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-lg font-semibold text-gray-800">
+                                ${groupName} <span class="font-normal text-gray-600">(${groupedStudents[groupName]?.length || 0} estudiantes)</span>
+                            </h4>
                         </div>
-                    ))}
-                </div>
-            )}
+                    </div>
+                `).join('');
 
-            <h3 className="text-xl font-semibold mt-8 mb-4 text-gray-700">Gestionar Grupos:</h3>
-            <div className="border p-4 rounded-md bg-gray-50 mb-6">
-                <div className="mb-4">
-                    <label htmlFor="selectGroupToManage" className="block text-sm font-medium text-gray-700">Seleccionar Grupo:</label>
-                    <select
-                        id="selectGroupToManage"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={selectedGroupToManage}
-                        onChange={(e) => {
-                            setSelectedGroupToManage(e.target.value);
-                            setNewGroupNameToRename(e.target.value); // Pre-fill rename input
-                        }}
-                    >
-                        <option value="">-- Selecciona un Grupo --</option>
-                        {uniqueGroups.map(group => (
-                            <option key={group} value={group}>{group}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="mb-4">
-                    <label htmlFor="newGroupNameToRename" className="block text-sm font-medium text-gray-700">Nuevo Nombre del Grupo (para renombrar):</label>
-                    <input
-                        type="text"
-                        id="newGroupNameToRename"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={newGroupNameToRename}
-                        onChange={(e) => setNewGroupNameToRename(e.target.value)}
-                        placeholder="Ej: Nuevo Grupo de Inicial I"
-                        disabled={!selectedGroupToManage}
-                    />
-                </div>
-                <div className="flex flex-col md:flex-row gap-4">
-                    <button
-                        onClick={handleRenameGroup}
-                        disabled={!selectedGroupToManage || !newGroupNameToRename.trim() || selectedGroupToManage === newGroupNameToRename.trim()}
-                        className="flex-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-md shadow-md hover:from-blue-600 hover:to-indigo-700 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Renombrar Grupo
-                    </button>
-                    <button
-                        onClick={handleDeleteGroup}
-                        disabled={!selectedGroupToManage}
-                        className="flex-1 px-6 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold rounded-md shadow-md hover:from-red-600 hover:to-rose-700 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        Eliminar Grupo
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-};
+                selectGroupToManage.innerHTML = '<option value="">-- Selecciona un Grupo --</option>' + uniqueGroups.map(group => `
+                    <option value="${group}">${group}</option>
+                `).join('');
+            }
 
-// Modulo Lista de Cotejo
-const ChecklistManagement = () => {
-    const { checklists, setChecklists } = useContext(AppContext);
-    const [checklistName, setChecklistName] = useState('');
-    const [criteria, setCriteria] = useState([{ id: crypto.randomUUID(), name: '' }]);
-    const [levels, setLevels] = useState([
-        { id: 'l1', name: 'Previo al Inicio', score: 1 },
-        { id: 'l2', name: 'Inicio', score: 2 },
-        { id: 'l3', name: 'Proceso', score: 3 },
-        { id: 'l4', name: 'Logrado', score: 4 },
-        { id: 'l5', name: 'Destacado', score: 5 }
-    ]);
-    const [editingChecklistId, setEditingChecklistId] = useState(null);
-    const [message, setMessage] = useState({ text: '', type: '' });
+            selectGroupToManage.onchange = () => {
+                const selectedGroup = selectGroupToManage.value;
+                setSelectedGroupToManage(selectedGroup);
+                newGroupNameToRenameInput.value = selectedGroup;
+                newGroupNameToRenameInput.disabled = !selectedGroup;
+                renameGroupBtn.disabled = !selectedGroup || !newGroupNameToRenameInput.value.trim() || selectedGroup === newGroupNameToRenameInput.value.trim();
+                deleteGroupBtn.disabled = !selectedGroup;
+            };
 
-    const handleAddCriterion = () => {
-        setCriteria([...criteria, { id: crypto.randomUUID(), name: '' }]);
-    };
+            newGroupNameToRenameInput.oninput = () => {
+                renameGroupBtn.disabled = !selectedGroupToManage || !newGroupNameToRenameInput.value.trim() || selectedGroupToManage === newGroupNameToRenameInput.value.trim();
+            };
 
-    const handleCriterionChange = (id, newName) => {
-        setCriteria(criteria.map(c => c.id === id ? { ...c, name: newName } : c));
-    };
+            renameGroupBtn.onclick = () => {
+                const oldGroupName = selectGroupToManage.value;
+                const newGroupName = newGroupNameToRenameInput.value.trim();
 
-    const handleRemoveCriterion = (id) => {
-        setCriteria(criteria.filter(c => c.id !== id));
-    };
+                if (!oldGroupName || !newGroupName) {
+                    displayMessage('student-management-message-container', 'Por favor, selecciona un grupo y proporciona un nuevo nombre.', 'error');
+                    return;
+                }
+                if (oldGroupName === newGroupName) {
+                    displayMessage('student-management-message-container', 'El nuevo nombre del grupo es el mismo que el actual.', 'info');
+                    return;
+                }
+                if (uniqueGroups.includes(newGroupName)) {
+                    displayMessage('student-management-message-container', `Ya existe un grupo con el nombre "${newGroupName}".`, 'error');
+                    return;
+                }
 
-    const handleLevelChange = (id, field, value) => {
-        setLevels(levels.map(l => l.id === id ? { ...l, [field]: field === 'score' ? parseFloat(value) || 0 : value } : l));
-    };
+                students = students.map(student =>
+                    (student.group || 'Sin Grupo') === oldGroupName
+                        ? { ...student, group: newGroupName }
+                        : student
+                );
+                evaluations = evaluations.map(evalItem =>
+                    (evalItem.studentGroup || 'Sin Grupo') === oldGroupName
+                        ? { ...evalItem, studentGroup: newGroupName }
+                        : evalItem
+                );
 
-    const handleSaveChecklist = () => {
-        const validCriteria = criteria.filter(c => c.name.trim() !== '');
-        if (!checklistName.trim() || validCriteria.length === 0) {
-            setMessage({ text: 'El nombre de la lista y al menos un criterio son obligatorios.', type: 'error' });
-            return;
+                saveDataToLocalStorage();
+                displayMessage('student-management-message-container', `Grupo "${oldGroupName}" renombrado a "${newGroupName}" correctamente.`, 'success');
+                selectedGroupToManage = '';
+                newGroupNameToRenameInput.value = '';
+                renderStudentManagementPage();
+            };
+
+            deleteGroupBtn.onclick = () => {
+                const groupToDelete = selectGroupToManage.value;
+                if (!groupToDelete) {
+                    displayMessage('student-management-message-container', 'Por favor, selecciona un grupo para eliminar.', 'error');
+                    return;
+                }
+
+                const studentsInDeletedGroupIds = students
+                    .filter(student => (student.group || 'Sin Grupo') === groupToDelete)
+                    .map(student => student.id);
+
+                students = students.filter(student => (student.group || 'Sin Grupo') !== groupToDelete);
+                evaluations = evaluations.filter(evalItem => !studentsInDeletedGroupIds.includes(evalItem.studentId));
+
+                saveDataToLocalStorage();
+                displayMessage('student-management-message-container', `Grupo "${groupToDelete}" y todos sus estudiantes y evaluaciones asociadas eliminados correctamente.`, 'success');
+                selectedGroupToManage = '';
+                newGroupNameToRenameInput.value = '';
+                renderStudentManagementPage();
+            };
+
+            // Initial state for buttons
+            newGroupNameToRenameInput.disabled = !selectedGroupToManage;
+            renameGroupBtn.disabled = !selectedGroupToManage || !newGroupNameToRenameInput.value.trim() || selectedGroupToManage === newGroupNameToRenameInput.value.trim();
+            deleteGroupBtn.disabled = !selectedGroupToManage;
         }
 
-        const checklistData = {
-            id: editingChecklistId || crypto.randomUUID(),
-            name: checklistName,
-            criteria: validCriteria,
-            levels: levels
-        };
+        // --- Checklist Management Module ---
+        function renderChecklistManagementPage() {
+            const pageDiv = document.getElementById('checklistManagement-page');
+            pageDiv.innerHTML = `
+                <div class="p-6 bg-white rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Gestión de Listas de Cotejo</h2>
+                    <div id="checklist-management-message-container"></div>
+                    <div class="mb-6 border p-4 rounded-md bg-gray-50">
+                        <label htmlFor="checklistName" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Lista de Cotejo:</label>
+                        <input type="text" id="checklistName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
 
-        if (editingChecklistId) {
-            setChecklists(checklists.map(cl => cl.id === editingChecklistId ? checklistData : cl));
-            setMessage({ text: 'Lista de cotejo actualizada correctamente.', type: 'success' });
-        } else {
-            setChecklists([...checklists, checklistData]);
-            setMessage({ text: 'Lista de cotejo guardada correctamente.', type: 'success' });
-        }
-        resetForm();
-    };
+                        <h3 class="text-lg font-semibold mt-4 mb-2 text-gray-700">Criterios a Evaluar:</h3>
+                        <div id="criteria-list"></div>
+                        <button id="add-criterion-btn" class="mt-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105">
+                            Agregar Criterio
+                        </button>
 
-    const handleEditChecklist = (checklist) => {
-        setEditingChecklistId(checklist.id);
-        setChecklistName(checklist.name);
-        setCriteria(checklist.criteria);
-        setLevels(checklist.levels);
-    };
+                        <h3 class="text-lg font-semibold mt-6 mb-2 text-gray-700">Niveles de Evaluación y Puntajes:</h3>
+                        <div id="levels-list"></div>
+                    </div>
+                    <div class="flex gap-4">
+                        <button id="save-checklist-btn" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-md shadow-md hover:from-purple-600 hover:to-pink-700 transition duration-300 ease-in-out transform hover:scale-105">
+                            Guardar Lista de Cotejo
+                        </button>
+                        <button id="cancel-edit-checklist-btn" class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 transition duration-300 ease-in-out transform hover:scale-105 hidden">
+                            Cancelar Edición
+                        </button>
+                    </div>
 
-    const handleDeleteChecklist = (id) => {
-        setChecklists(checklists.filter(checklist => checklist.id !== id));
-        setMessage({ text: 'Lista de cotejo eliminada.', type: 'success' });
-    };
-
-    const resetForm = () => {
-        setChecklistName('');
-        setCriteria([{ id: crypto.randomUUID(), name: '' }]);
-        setLevels([
-            { id: 'l1', name: 'Previo al Inicio', score: 1 },
-            { id: 'l2', name: 'Inicio', score: 2 },
-            { id: 'l3', name: 'Proceso', score: 3 },
-            { id: 'l4', name: 'Logrado', score: 4 },
-            { id: 'l5', name: 'Destacado', score: 5 }
-        ]);
-        setEditingChecklistId(null);
-    };
-
-    return (
-        <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Gestión de Listas de Cotejo</h2>
-            {message.text && (
-                <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {message.text}
+                    <h3 class="text-xl font-semibold mt-8 mb-4 text-gray-700">Listas de Cotejo Existentes:</h3>
+                    <ul id="existing-checklists-list" class="divide-y divide-gray-200 border border-gray-200 rounded-md"></ul>
                 </div>
-            )}
-            <div className="mb-6 border p-4 rounded-md bg-gray-50">
-                <label htmlFor="checklistName" className="block text-sm font-medium text-gray-700 mb-2">Nombre de la Lista de Cotejo:</label>
-                <input
-                    type="text"
-                    id="checklistName"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    value={checklistName}
-                    onChange={(e) => setChecklistName(e.target.value)}
-                />
+            `;
 
-                <h3 className="text-lg font-semibold mt-4 mb-2 text-gray-700">Criterios a Evaluar:</h3>
-                {criteria.map((criterion, index) => (
-                    <div key={criterion.id} className="flex items-center mb-2">
-                        <input
-                            type="text"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            value={criterion.name}
-                            onChange={(e) => handleCriterionChange(criterion.id, e.target.value)}
-                            placeholder={`Criterio ${index + 1}`}
-                        />
-                        {criteria.length > 1 && (
-                            <button
-                                onClick={() => handleRemoveCriterion(criterion.id)}
-                                className="ml-2 p-2 text-red-600 hover:text-red-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                                aria-label="Eliminar criterio"
-                            >
-                                <IconX className="w-5 h-5" />
-                            </button>
-                        )}
+            const checklistNameInput = document.getElementById('checklistName');
+            const criteriaListDiv = document.getElementById('criteria-list');
+            const addCriterionBtn = document.getElementById('add-criterion-btn');
+            const levelsListDiv = document.getElementById('levels-list');
+            const saveChecklistBtn = document.getElementById('save-checklist-btn');
+            const cancelEditChecklistBtn = document.getElementById('cancel-edit-checklist-btn');
+            const existingChecklistsList = document.getElementById('existing-checklists-list');
+
+            let currentCriteria = [{ id: generateUUID(), name: '' }];
+            let currentLevels = [
+                { id: 'l1', name: 'Previo al Inicio', score: 1 },
+                { id: 'l2', name: 'Inicio', score: 2 },
+                { id: 'l3', name: 'Proceso', score: 3 },
+                { id: 'l4', name: 'Logrado', score: 4 },
+                { id: 'l5', name: 'Destacado', score: 5 }
+            ];
+
+            const renderCriteria = () => {
+                criteriaListDiv.innerHTML = currentCriteria.map((criterion, index) => `
+                    <div class="flex items-center mb-2">
+                        <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="${criterion.name}" placeholder="Criterio ${index + 1}" data-criterion-id="${criterion.id}" />
+                        ${currentCriteria.length > 1 ? `<button data-remove-criterion-id="${criterion.id}" class="ml-2 p-2 text-red-600 hover:text-red-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" aria-label="Eliminar criterio">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>` : ''}
                     </div>
-                ))}
-                <button
-                    onClick={handleAddCriterion}
-                    className="mt-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                    Agregar Criterio
-                </button>
+                `).join('');
 
-                <h3 className="text-lg font-semibold mt-6 mb-2 text-gray-700">Niveles de Evaluación y Puntajes:</h3>
-                {levels.map((level) => (
-                    <div key={level.id} className="flex items-center mb-2 gap-2">
-                        <input
-                            type="text"
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            value={level.name}
-                            onChange={(e) => handleLevelChange(level.id, 'name', e.target.value)}
-                            placeholder="Nombre del Nivel"
-                        />
-                        <input
-                            type="number"
-                            className="mt-1 block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            value={level.score}
-                            onChange={(e) => handleLevelChange(level.id, 'score', e.target.value)}
-                            placeholder="Puntaje"
-                            min="0"
-                            step="0.1"
-                        />
+                criteriaListDiv.querySelectorAll('input[data-criterion-id]').forEach(input => {
+                    input.oninput = (e) => {
+                        const id = e.target.dataset.criterionId;
+                        const newName = e.target.value;
+                        currentCriteria = currentCriteria.map(c => c.id === id ? { ...c, name: newName } : c);
+                    };
+                });
+                criteriaListDiv.querySelectorAll('button[data-remove-criterion-id]').forEach(button => {
+                    button.onclick = (e) => {
+                        const id = e.currentTarget.dataset.removeCriterionId;
+                        currentCriteria = currentCriteria.filter(c => c.id !== id);
+                        renderCriteria();
+                    };
+                });
+            };
+
+            const renderLevels = () => {
+                levelsListDiv.innerHTML = currentLevels.map(level => `
+                    <div class="flex items-center mb-2 gap-2">
+                        <input type="text" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="${level.name}" placeholder="Nombre del Nivel" data-level-id="${level.id}" data-field="name" />
+                        <input type="number" class="mt-1 block w-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="${level.score}" placeholder="Puntaje" min="0" step="0.1" data-level-id="${level.id}" data-field="score" />
                     </div>
-                ))}
-            </div>
-            <div className="flex gap-4">
-                <button
-                    onClick={handleSaveChecklist}
-                    className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold rounded-md shadow-md hover:from-purple-600 hover:to-pink-700 transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                    {editingChecklistId ? 'Actualizar Lista' : 'Guardar Lista de Cotejo'}
-                </button>
-                {editingChecklistId && (
-                    <button
-                        onClick={resetForm}
-                        className="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 transition duration-300 ease-in-out transform hover:scale-105"
-                    >
-                        Cancelar Edición
-                    </button>
-                )}
-            </div>
+                `).join('');
 
-            <h3 className="text-xl font-semibold mt-8 mb-4 text-gray-700">Listas de Cotejo Existentes:</h3>
-            {checklists.length === 0 ? (
-                <p className="text-gray-500">No hay listas de cotejo creadas.</p>
-            ) : (
-                <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md">
-                    {checklists.map((checklist) => (
-                        <li key={checklist.id} className="p-4 flex flex-wrap justify-between items-center bg-gray-50 hover:bg-gray-100">
-                            <span className="text-gray-800 font-medium text-lg mb-2 md:mb-0">{checklist.name}</span>
-                            <div className="flex flex-col md:flex-row gap-2">
-                                <button
-                                    onClick={() => handleEditChecklist(checklist)}
-                                    className="p-2 text-blue-600 hover:text-blue-800 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-                                    aria-label={`Editar lista ${checklist.name}`}
-                                >
-                                    <IconEdit className="w-5 h-5" />
+                levelsListDiv.querySelectorAll('input[data-level-id]').forEach(input => {
+                    input.oninput = (e) => {
+                        const id = e.target.dataset.levelId;
+                        const field = e.target.dataset.field;
+                        const value = e.target.value;
+                        currentLevels = currentLevels.map(l => l.id === id ? { ...l, [field]: field === 'score' ? parseFloat(value) || 0 : value } : l);
+                    };
+                });
+            };
+
+            const resetForm = () => {
+                checklistNameInput.value = '';
+                currentCriteria = [{ id: generateUUID(), name: '' }];
+                currentLevels = [
+                    { id: 'l1', name: 'Previo al Inicio', score: 1 },
+                    { id: 'l2', name: 'Inicio', score: 2 },
+                    { id: 'l3', name: 'Proceso', score: 3 },
+                    { id: 'l4', name: 'Logrado', score: 4 },
+                    { id: 'l5', name: 'Destacado', score: 5 }
+                ];
+                editingChecklistId = null;
+                saveChecklistBtn.textContent = 'Guardar Lista de Cotejo';
+                cancelEditChecklistBtn.classList.add('hidden');
+                renderCriteria();
+                renderLevels();
+            };
+
+            const handleSaveChecklist = () => {
+                const validCriteria = currentCriteria.filter(c => c.name.trim() !== '');
+                if (!checklistNameInput.value.trim() || validCriteria.length === 0) {
+                    displayMessage('checklist-management-message-container', 'El nombre de la lista y al menos un criterio son obligatorios.', 'error');
+                    return;
+                }
+
+                const checklistData = {
+                    id: editingChecklistId || generateUUID(),
+                    name: checklistNameInput.value,
+                    criteria: validCriteria,
+                    levels: currentLevels
+                };
+
+                if (editingChecklistId) {
+                    checklists = checklists.map(cl => cl.id === editingChecklistId ? checklistData : cl);
+                    displayMessage('checklist-management-message-container', 'Lista de cotejo actualizada correctamente.', 'success');
+                } else {
+                    checklists = [...checklists, checklistData];
+                    displayMessage('checklist-management-message-container', 'Lista de cotejo guardada correctamente.', 'success');
+                }
+                saveDataToLocalStorage();
+                resetForm();
+                renderExistingChecklists();
+            };
+
+            const handleEditChecklist = (id) => {
+                const checklistToEdit = checklists.find(cl => cl.id === id);
+                if (checklistToEdit) {
+                    editingChecklistId = checklistToEdit.id;
+                    checklistNameInput.value = checklistToEdit.name;
+                    currentCriteria = JSON.parse(JSON.stringify(checklistToEdit.criteria)); // Deep copy
+                    currentLevels = JSON.parse(JSON.stringify(checklistToEdit.levels)); // Deep copy
+                    saveChecklistBtn.textContent = 'Actualizar Lista';
+                    cancelEditChecklistBtn.classList.remove('hidden');
+                    renderCriteria();
+                    renderLevels();
+                }
+            };
+
+            const handleDeleteChecklist = (id) => {
+                checklists = checklists.filter(checklist => checklist.id !== id);
+                saveDataToLocalStorage();
+                displayMessage('checklist-management-message-container', 'Lista de cotejo eliminada.', 'success');
+                renderExistingChecklists();
+                resetForm(); // Reset form if the deleted checklist was being edited
+            };
+
+            const renderExistingChecklists = () => {
+                if (checklists.length === 0) {
+                    existingChecklistsList.innerHTML = '<li class="p-3 text-gray-500">No hay listas de cotejo creadas.</li>';
+                } else {
+                    existingChecklistsList.innerHTML = checklists.map(checklist => `
+                        <li class="p-4 flex flex-wrap justify-between items-center bg-gray-50 hover:bg-gray-100">
+                            <span class="text-gray-800 font-medium text-lg mb-2 md:mb-0">${checklist.name}</span>
+                            <div class="flex flex-col md:flex-row gap-2">
+                                <button data-edit-id="${checklist.id}" class="p-2 text-blue-600 hover:text-blue-800 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" aria-label="Editar lista">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
                                 </button>
-                                <button
-                                    onClick={() => handleDeleteChecklist(checklist.id)}
-                                    className="p-2 text-red-600 hover:text-red-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-                                    aria-label={`Eliminar lista ${checklist.name}`}
-                                >
-                                    <IconX className="w-5 h-5" />
+                                <button data-delete-id="${checklist.id}" class="p-2 text-red-600 hover:text-red-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50" aria-label="Eliminar lista">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
                                 </button>
                             </div>
                         </li>
-                    ))}
-                </ul>
-            )}
-        </div>
-    );
-};
+                    `).join('');
 
-// Modulo de Evaluación
-const EvaluationModule = () => {
-    const { students, checklists, evaluations, setEvaluations, selectedGroupId, setSelectedGroupId, selectedChecklistId, setSelectedChecklistId } = useContext(AppContext);
-    const [selectedStudentId, setSelectedStudentId] = useState('');
-    const [currentChecklist, setCurrentChecklist] = useState(null);
-    const [evaluationScores, setEvaluationScores] = useState({}); // { criterionId: levelId }
-    const [totalScore, setTotalScore] = useState(0);
-    const [average, setAverage] = useState(0);
-    const [qualitativeRating, setQualitativeRating] = useState('');
-    const [message, setMessage] = useState({ text: '', type: '' });
-    const [editingEvaluationId, setEditingEvaluationId] = useState(null); // New state for editing existing evaluation
-
-    // Map level IDs to Tailwind CSS classes for colors
-    const levelColorClasses = {
-        'l1': 'bg-orange-500 hover:bg-orange-600 text-white', // Previo al Inicio
-        'l2': 'bg-yellow-500 hover:bg-yellow-600 text-white', // Inicio
-        'l3': 'bg-green-500 hover:bg-green-600 text-white',   // Proceso
-        'l4': 'bg-blue-400 hover:bg-blue-500 text-white',    // Logrado
-        'l5': 'bg-blue-700 hover:bg-blue-800 text-white',   // Destacado
-    };
-
-    // Function to check if a student has been evaluated
-    const isStudentEvaluated = (studentId) => {
-        return evaluations.some(evalItem => evalItem.studentId === studentId);
-    };
-
-    // Get unique groups for the dropdown
-    const uniqueGroups = [...new Set(students.map(student => student.group || 'Sin Grupo'))].sort();
-
-    // Filter students based on selected group
-    const filteredStudents = selectedGroupId
-        ? students.filter(student => (student.group || 'Sin Grupo') === selectedGroupId)
-        : []; // If no group selected, show no students
-
-    // Find the index of the currently selected student within the filtered list
-    const currentStudentIndex = filteredStudents.findIndex(s => s.id === selectedStudentId);
-
-    // Effect to handle student selection when group or student changes
-    useEffect(() => {
-        if (selectedStudentId && selectedChecklistId) {
-            const checklist = checklists.find(c => c.id === selectedChecklistId);
-            setCurrentChecklist(checklist);
-
-            const existingEvaluation = evaluations.find(
-                e => e.studentId === selectedStudentId && e.checklistId === selectedChecklistId
-            );
-
-            if (existingEvaluation) {
-                // Load existing evaluation for editing
-                setEditingEvaluationId(existingEvaluation.id);
-                const scores = {};
-                existingEvaluation.scores.forEach(s => {
-                    scores[s.criterionId] = s.levelId;
-                });
-                setEvaluationScores(scores);
-                setMessage({ text: 'Evaluación existente cargada para edición.', type: 'success' });
-            } else if (checklist) {
-                // Prepare for new evaluation
-                setEditingEvaluationId(null);
-                const initialEvaluationScores = {};
-                checklist.criteria.forEach(c => initialEvaluationScores[c.id] = '');
-                setEvaluationScores(initialEvaluationScores);
-                setTotalScore(0);
-                setAverage(0);
-                setQualitativeRating('');
-                setMessage({ text: '', type: '' }); // Clear message
-            }
-        } else {
-            // Reset all states if no student or checklist is selected
-            setCurrentChecklist(null);
-            setEvaluationScores({});
-            setTotalScore(0);
-            setAverage(0);
-            setQualitativeRating('');
-            setEditingEvaluationId(null);
-            setMessage({ text: '', type: '' }); // Clear message
-        }
-    }, [selectedStudentId, selectedChecklistId, checklists, evaluations]);
-
-    // Calculate score and average
-    useEffect(() => {
-        if (!currentChecklist) return;
-
-        let calculatedTotalScore = 0;
-        let evaluatedCriteriaCount = 0;
-
-        currentChecklist.criteria.forEach(criterion => {
-            const selectedLevelId = evaluationScores[criterion.id];
-            if (selectedLevelId) {
-                const level = currentChecklist.levels.find(l => l.id === selectedLevelId);
-                if (level) {
-                    calculatedTotalScore += level.score;
-                    evaluatedCriteriaCount++;
+                    existingChecklistsList.querySelectorAll('button[data-edit-id]').forEach(button => {
+                        button.onclick = (e) => handleEditChecklist(e.currentTarget.dataset.editId);
+                    });
+                    existingChecklistsList.querySelectorAll('button[data-delete-id]').forEach(button => {
+                        button.onclick = (e) => handleDeleteChecklist(e.currentTarget.dataset.deleteId);
+                    });
                 }
+            };
+
+            // Initial render calls
+            renderCriteria();
+            renderLevels();
+            renderExistingChecklists();
+
+            // Event listeners
+            addCriterionBtn.onclick = () => {
+                currentCriteria.push({ id: generateUUID(), name: '' });
+                renderCriteria();
+            };
+            saveChecklistBtn.onclick = handleSaveChecklist;
+            cancelEditChecklistBtn.onclick = resetForm;
+
+            // Initialize form fields
+            if (editingChecklistId) {
+                const checklistToEdit = checklists.find(cl => cl.id === editingChecklistId);
+                if (checklistToEdit) {
+                    checklistNameInput.value = checklistToEdit.name;
+                    currentCriteria = JSON.parse(JSON.stringify(checklistToEdit.criteria));
+                    currentLevels = JSON.parse(JSON.stringify(checklistToEdit.levels));
+                    saveChecklistBtn.textContent = 'Actualizar Lista';
+                    cancelEditChecklistBtn.classList.remove('hidden');
+                }
+            } else {
+                checklistNameInput.value = '';
+                saveChecklistBtn.textContent = 'Guardar Lista de Cotejo';
+                cancelEditChecklistBtn.classList.add('hidden');
             }
-        });
-
-        const calculatedAverage = evaluatedCriteriaCount > 0 ? calculatedTotalScore / evaluatedCriteriaCount : 0;
-        setTotalScore(calculatedTotalScore);
-        setAverage(parseFloat(calculatedAverage.toFixed(1))); // Round to one decimal
-
-        // Determine qualitative rating
-        let rating = '';
-        if (calculatedAverage >= 0 && calculatedAverage < 2) {
-            rating = 'Previo al Inicio';
-        } else if (calculatedAverage >= 2 && calculatedAverage < 3) {
-            rating = 'Inicio';
-        } else if (calculatedAverage >= 3 && calculatedAverage < 4) {
-            rating = 'Proceso';
-        } else if (calculatedAverage >= 4 && calculatedAverage < 5) {
-            rating = 'Logrado';
-        } else if (calculatedAverage === 5) {
-            rating = 'Destacado';
-        }
-        setQualitativeRating(rating);
-    }, [evaluationScores, currentChecklist]);
-
-    const handleEvaluationChange = (criterionId, levelId) => {
-        setEvaluationScores({
-            ...evaluationScores,
-            [criterionId]: levelId
-        });
-    };
-
-    const handleSaveEvaluation = () => {
-        if (!selectedStudentId || !selectedChecklistId || !currentChecklist) {
-            setMessage({ text: 'Por favor, selecciona un estudiante y una lista de cotejo.', type: 'error' });
-            return;
+            renderCriteria();
+            renderLevels();
         }
 
-        const student = students.find(s => s.id === selectedStudentId);
-        if (!student) {
-            setMessage({ text: 'Estudiante no encontrado.', type: 'error' });
-            return;
-        }
 
-        // Ensure all criteria have been evaluated
-        const allEvaluated = currentChecklist.criteria.every(c => evaluationScores[c.id]);
-        if (!allEvaluated) {
-            setMessage({ text: 'Por favor, evalúa todos los criterios antes de guardar.', type: 'error' });
-            return;
-        }
-
-        const evaluationData = {
-            id: editingEvaluationId || crypto.randomUUID(), // Use existing ID if editing, otherwise new ID
-            studentId: selectedStudentId,
-            // studentDni: student.dni, // DNI removed from data saved for evaluation
-            studentFullName: student.fullName,
-            studentGroup: student.group || '', // Include student group
-            checklistId: selectedChecklistId,
-            checklistName: currentChecklist.name,
-            date: new Date().toISOString().split('T')[0],
-            scores: currentChecklist.criteria.map(criterion => {
-                const selectedLevelId = evaluationScores[criterion.id];
-                const level = currentChecklist.levels.find(l => l.id === selectedLevelId);
-                return {
-                    criterionId: criterion.id,
-                    criterionName: criterion.name,
-                    levelId: selectedLevelId,
-                    levelName: level ? level.name : 'N/A',
-                    score: level ? level.score : 0
-                };
-            }),
-            totalScore: totalScore,
-            average: average,
-            qualitativeRating: qualitativeRating
-        };
-
-        if (editingEvaluationId) {
-            // Update existing evaluation
-            setEvaluations(evaluations.map(e => e.id === editingEvaluationId ? evaluationData : e));
-            setMessage({ text: 'Evaluación actualizada correctamente.', type: 'success' });
-        } else {
-            // Add new evaluation
-            setEvaluations([...evaluations, evaluationData]);
-            setMessage({ text: 'Evaluación guardada correctamente.', type: 'success' });
-        }
-        
-        // Optionally reset form if desired, or navigate to next student
-        // For now, it keeps the group/checklist selected, ready for next student
-    };
-
-    const handleResetForm = () => {
-        setSelectedStudentId('');
-        setCurrentChecklist(null); // Reset current checklist to ensure it reloads cleanly
-        setEvaluationScores({});
-        setTotalScore(0);
-        setAverage(0);
-        setQualitativeRating('');
-        setEditingEvaluationId(null);
-        setMessage({ text: 'Formulario de evaluación reiniciado. Selecciona un estudiante para continuar.', type: 'info' });
-    };
-
-    const handleNextStudent = () => {
-        if (currentStudentIndex < filteredStudents.length - 1) {
-            setSelectedStudentId(filteredStudents[currentStudentIndex + 1].id);
-        } else {
-            setMessage({ text: 'No hay más estudiantes en este grupo.', type: 'info' });
-        }
-    };
-
-    const handlePreviousStudent = () => {
-        if (currentStudentIndex > 0) {
-            setSelectedStudentId(filteredStudents[currentStudentIndex - 1].id);
-        } else {
-            setMessage({ text: 'No hay estudiantes anteriores en este grupo.', type: 'info' });
-        }
-    };
-
-    return (
-        <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Módulo de Evaluación</h2>
-            {message.text && (
-                <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-700' : (message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700')}`}>
-                    {message.text}
-                </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                    <label htmlFor="selectGroup" className="block text-sm font-medium text-gray-700">Seleccionar Grupo:</label>
-                    <select
-                        id="selectGroup"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={selectedGroupId}
-                        onChange={(e) => {
-                            setSelectedGroupId(e.target.value);
-                            setSelectedStudentId(''); // Reset student selection when group changes
-                        }}
-                    >
-                        <option value="">-- Selecciona un Grupo --</option>
-                        {uniqueGroups.map(group => (
-                            <option key={group} value={group}>{group}</option>
-                        ))}
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="selectChecklist" className="block text-sm font-medium text-gray-700">Seleccionar Lista de Cotejo:</label>
-                    <select
-                        id="selectChecklist"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={selectedChecklistId}
-                        onChange={(e) => setSelectedChecklistId(e.target.value)}
-                    >
-                        <option value="">-- Selecciona una Lista de Cotejo --</option>
-                        {checklists.map(checklist => (
-                            <option key={checklist.id} value={checklist.id}>{checklist.name}</option>
-                        ))}
-                    </select>
-                </div>
-                <div className="md:col-span-2">
-                    <label htmlFor="selectStudent" className="block text-sm font-medium text-gray-700">Seleccionar Estudiante:</label>
-                    <select
-                        id="selectStudent"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        value={selectedStudentId}
-                        onChange={(e) => setSelectedStudentId(e.target.value)}
-                        disabled={!selectedGroupId || filteredStudents.length === 0} // Disable if no group or no students in group
-                    >
-                        <option value="">-- Selecciona un Estudiante --</option>
-                        {filteredStudents.map(student => (
-                            // DNI removed from student display in dropdown
-                            <option key={student.id} value={student.id}>
-                                {student.fullName} {isStudentEvaluated(student.id) ? ' - Evaluado' : ''}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {selectedStudentId && selectedChecklistId && currentChecklist && (
-                <div className="border p-4 rounded-md bg-gray-50 mb-6">
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700">Evaluando a: <span className="text-blue-700">{students.find(s => s.id === selectedStudentId)?.fullName}</span> con la lista "<span className="text-blue-700">{currentChecklist.name}</span>"</h3>
-                    {currentChecklist.criteria.map(criterion => (
-                        <div key={criterion.id} className="mb-4">
-                            <p className="font-medium text-gray-800">{criterion.name}:</p>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {currentChecklist.levels.map(level => (
-                                    <button
-                                        key={level.id}
-                                        type="button"
-                                        onClick={() => handleEvaluationChange(criterion.id, level.id)}
-                                        className={`
-                                            px-4 py-2 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105
-                                            ${levelColorClasses[level.id] || 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
-                                            ${evaluationScores[criterion.id] === level.id ? 'ring-2 ring-offset-2 ring-indigo-500' : ''}
-                                        `}
-                                    >
-                                        {level.name} ({level.score})
-                                    </button>
-                                ))}
-                            </div>
+        // --- Evaluation Module ---
+        function renderEvaluationModulePage() {
+            const pageDiv = document.getElementById('evaluation-page');
+            pageDiv.innerHTML = `
+                <div class="p-6 bg-white rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Módulo de Evaluación</h2>
+                    <div id="evaluation-message-container"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label htmlFor="selectGroup" class="block text-sm font-medium text-gray-700">Seleccionar Grupo:</label>
+                            <select id="selectGroup" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
                         </div>
-                    ))}
-
-                    <div className="mt-6 p-4 border-t border-gray-200 pt-4">
-                        <p className="text-lg font-semibold text-gray-800">Puntaje Total: <span className="text-green-600">{totalScore.toFixed(1)}</span></p>
-                        <p className="text-lg font-semibold text-gray-800">Promedio: <span className="text-green-600">{average.toFixed(1)}</span></p>
-                        <p className="text-lg font-semibold text-gray-800">Calificación Cualitativa: <span className="text-purple-600">{qualitativeRating}</span></p>
+                        <div>
+                            <label htmlFor="selectChecklist" class="block text-sm font-medium text-gray-700">Seleccionar Lista de Cotejo:</label>
+                            <select id="selectChecklist" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label htmlFor="selectStudent" class="block text-sm font-medium text-gray-700">Seleccionar Estudiante:</label>
+                            <select id="selectStudent" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
+                        </div>
                     </div>
 
-                    <div className="flex gap-4 mt-6">
-                        <button
-                            onClick={handleSaveEvaluation}
-                            className="flex-1 px-6 py-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-md shadow-md hover:from-teal-600 hover:to-cyan-700 transition duration-300 ease-in-out transform hover:scale-105"
-                        >
-                            {editingEvaluationId ? 'Actualizar Evaluación' : 'Guardar Evaluación'}
-                        </button>
-                        <button
-                            onClick={handleResetForm}
-                            className="flex-1 px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 transition duration-300 ease-in-out transform hover:scale-105"
-                        >
-                            Reiniciar Formulario
-                        </button>
-                    </div>
-                    <div className="flex justify-between gap-4 mt-4">
-                        <button
-                            onClick={handlePreviousStudent}
-                            disabled={currentStudentIndex === 0}
-                            className="flex-1 px-6 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Estudiante Anterior
-                        </button>
-                        <button
-                            onClick={handleNextStudent}
-                            disabled={currentStudentIndex === filteredStudents.length - 1}
-                            className="flex-1 px-6 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Siguiente Estudiante
-                        </button>
+                    <div id="evaluation-form-content">
+                        <!-- Dynamic content for evaluation will be loaded here -->
                     </div>
                 </div>
-            )}
-        </div>
-    );
-};
-
-// Modulo de Reporte con Seguridad (Para el docente)
-const ReportModule = () => {
-    const { basicData, students, evaluations, checklists } = useContext(AppContext);
-    const [message, setMessage] = useState({ text: '', type: '' });
-    const { arePdfLibsLoaded } = useContext(AppContext); // Get PDF lib loading status
-    const [selectedGroupForSummary, setSelectedGroupForSummary] = useState(''); // New state for summary report group selection
-    const [selectedGroupForIndividualReports, setSelectedGroupForIndividualReports] = useState(''); // New state for individual reports group selection
-
-    // Get unique groups for the dropdowns
-    const uniqueGroups = [...new Set(students.map(student => student.group || 'Sin Grupo'))].sort();
-
-    // Filter students for individual reports based on selectedGroupForIndividualReports
-    const filteredStudentsForIndividualReports = selectedGroupForIndividualReports
-        ? students.filter(student => (student.group || 'Sin Grupo') === selectedGroupForIndividualReports)
-        : students; // If no group selected, show all students
-
-
-    const handleGenerateIndividualReport = async (student) => {
-        if (!arePdfLibsLoaded) {
-            setMessage({ text: 'Las librerías de PDF aún no están cargadas. Por favor, inténtalo de nuevo en unos segundos.', type: 'error' });
-            return;
-        }
-
-        setMessage({ text: `Generando reporte para ${student.fullName}, por favor espera...`, type: 'success' });
-
-        // Ensure we filter evaluations by student.id, not student.dni as studentDni is no longer part of evaluation
-        const studentEvaluations = evaluations.filter(e => e.studentId === student.id); 
-
-        if (studentEvaluations.length === 0) {
-            setMessage({ text: `No hay calificaciones para ${student.fullName}.`, type: 'error' });
-            return;
-        }
-
-        const pdfContentId = 'individual-pdf-content';
-        let tempDiv = document.createElement('div');
-        tempDiv.id = pdfContentId;
-        // Apply padding here for PDF margins
-        tempDiv.style.padding = '15mm'; // Adjust padding to control margins
-        tempDiv.style.width = '210mm'; // A4 width for consistent PDF generation
-        tempDiv.style.boxSizing = 'border-box'; // Include padding in width calculation
-        tempDiv.className = 'bg-white rounded-lg shadow-lg'; // Apply similar styling for consistency
-
-        let evaluationsHtml = studentEvaluations.map(evalItem => {
-            const criterionDetails = evalItem.scores.map(scoreItem => {
-                // Here, scoreItem already contains criterionName and levelName
-                return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${scoreItem.criterionName}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${scoreItem.levelName}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${scoreItem.score}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            return `
-                <li class="py-4">
-                    <p class="font-semibold text-lg text-blue-700">${evalItem.checklistName} - <span class="text-gray-600 font-normal text-base">${evalItem.date}</span></p>
-                    <p class="text-md font-medium text-gray-800 mt-2">Promedio: <span class="text-green-600">${evalItem.average.toFixed(1)}</span></p>
-                    <p class="text-md font-medium text-gray-800">Calificación: <span class="text-purple-600">${evalItem.qualitativeRating}</span></p>
-                    <div class="mt-2 text-sm text-gray-600">
-                        <p class="font-semibold">Detalle de criterios:</p>
-                        <table class="min-w-full bg-white border border-gray-300 rounded-md shadow-sm mt-2">
-                            <thead>
-                                <tr class="bg-gray-200">
-                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Criterio</th>
-                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Nivel</th>
-                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Puntaje</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${criterionDetails}
-                            </tbody>
-                        </table>
-                    </div>
-                </li>
             `;
-        }).join('');
 
-        tempDiv.innerHTML = `
-            <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Reporte de Calificaciones Individual</h2>
-            <div class="mb-4 text-sm text-gray-600 text-left"> {/* Added text-left */}
-                ${basicData ? `
-                    <p><span class="font-semibold">Institución:</span> ${basicData.institutionName || ''}</p>
-                    <p><span class="font-semibold">Curso:</span> ${basicData.courseName || ''}</p>
-                    <p><span class="font-semibold">Docente:</span> ${basicData.teacherName || ''}</p>
-                    <p><span class="font-semibold">Fecha del Reporte:</span> ${basicData.date || ''}</p>
-                    ${basicData.learningSessionName ? `<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span> "${basicData.learningSessionName}"</p>` : ''}
-                ` : ''}
-            </div>
-            <h3 class="text-xl font-semibold mb-4 text-gray-700">Estudiante: ${student.fullName} ${student.group ? `(Grupo: ${student.group})` : ''}</h3>
-            <ul class="divide-y divide-gray-200">
-                ${evaluationsHtml}
-            </ul>
-        `;
+            const selectGroup = document.getElementById('selectGroup');
+            const selectChecklist = document.getElementById('selectChecklist');
+            const selectStudent = document.getElementById('selectStudent');
+            const evaluationFormContent = document.getElementById('evaluation-form-content');
 
-        document.body.appendChild(tempDiv); // Append to body to ensure it's in the DOM for html2canvas
+            let currentChecklist = null;
+            let evaluationScores = {}; // { criterionId: levelId }
+            let totalScore = 0;
+            let average = 0;
+            let qualitativeRating = '';
+            let selectedStudentIdLocal = ''; // Use local variable for state within this render
 
-        try {
-            const jsPDF = window.jspdf.jsPDF || window.jspdf.default || window.jsPDF;
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const canvas = await window.html2canvas(tempDiv, { scale: 2 });
-            const imgData = canvas.toDataURL('image/jpeg', 1.0); // Use JPEG for smaller file size
+            const levelColorClasses = {
+                'l1': 'bg-orange-500 hover:bg-orange-600 text-white',
+                'l2': 'bg-yellow-500 hover:bg-yellow-600 text-white',
+                'l3': 'bg-green-500 hover:bg-green-600 text-white',
+                'l4': 'bg-blue-400 hover:bg-blue-500 text-white',
+                'l5': 'bg-blue-700 hover:bg-blue-800 text-white',
+            };
 
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
+            const isStudentEvaluated = (studentId) => {
+                return evaluations.some(evalItem => evalItem.studentId === studentId);
+            };
 
-            const pdfPageWidth = pdf.internal.pageSize.getWidth(); // A4 width: 210mm
-            const pdfPageHeight = pdf.internal.pageSize.getHeight(); // A4 height: 297mm
+            const uniqueGroups = [...new Set(students.map(student => student.group || 'Sin Grupo'))].sort();
 
-            const widthRatio = pdfPageWidth / imgWidth;
-            const finalImgWidth = pdfPageWidth;
-            const finalImgHeight = imgHeight * widthRatio; // Scale height proportionally to fit width
+            const renderSelectOptions = () => {
+                selectGroup.innerHTML = '<option value="">-- Selecciona un Grupo --</option>' +
+                    uniqueGroups.map(group => `<option value="${group}" ${selectedGroupId === group ? 'selected' : ''}>${group}</option>`).join('');
 
-            let heightLeft = finalImgHeight;
-            let position = 0; // The Y position on the PDF page
+                selectChecklist.innerHTML = '<option value="">-- Selecciona una Lista de Cotejo --</option>' +
+                    checklists.map(checklist => `<option value="${checklist.id}" ${selectedChecklistId === checklist.id ? 'selected' : ''}>${checklist.name}</option>`).join('');
 
-            pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
-            heightLeft -= pdfPageHeight;
+                const filteredStudents = selectedGroupId
+                    ? students.filter(student => (student.group || 'Sin Grupo') === selectedGroupId)
+                    : [];
+                
+                selectStudent.innerHTML = '<option value="">-- Selecciona un Estudiante --</option>' +
+                    filteredStudents.map(student => `
+                        <option value="${student.id}" ${selectedStudentIdLocal === student.id ? 'selected' : ''}>
+                            ${student.fullName} ${isStudentEvaluated(student.id) ? ' - Evaluado' : ''}
+                        </option>
+                    `).join('');
+                selectStudent.disabled = !selectedGroupId || filteredStudents.length === 0;
+            };
 
-            while (heightLeft > 0) {
-                position = heightLeft - finalImgHeight; // Calculate position for subsequent pages
-                pdf.addPage();
-                pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
-                heightLeft -= pdfPageHeight;
-            }
+            const calculateScores = () => {
+                if (!currentChecklist) {
+                    totalScore = 0;
+                    average = 0;
+                    qualitativeRating = '';
+                    return;
+                }
 
-            pdf.save(`Reporte_Calificaciones_${student.fullName.replace(/\s+/g, '_')}.pdf`); // Save with full name
-            setMessage({ text: 'Reporte PDF generado y descargado correctamente.', type: 'success' });
-        } catch (error) {
-            console.error("Error al generar PDF individual:", error);
-            setMessage({ text: 'Error al generar el reporte PDF.', type: 'error' });
-        } finally {
-            if (document.body.contains(tempDiv)) {
-                document.body.removeChild(tempDiv); // Clean up the temporary div
-            }
-        }
-    };
+                let calculatedTotalScore = 0;
+                let evaluatedCriteriaCount = 0;
 
-    const handleGenerateAllIndividualReports = async () => {
-        if (!arePdfLibsLoaded) {
-            setMessage({ text: 'Las librerías de PDF aún no están cargadas. Por favor, inténtalo de nuevo en unos segundos.', type: 'error' });
-            return;
-        }
-        if (filteredStudentsForIndividualReports.length === 0) {
-            setMessage({ text: 'No hay estudiantes en el grupo seleccionado para generar reportes.', type: 'error' });
-            return;
-        }
-
-        setMessage({ text: 'Generando reportes individuales para todos los estudiantes del grupo seleccionado. Esto puede tardar un momento...', type: 'info' });
-
-        for (const student of filteredStudentsForIndividualReports) {
-            // Generate report for each student
-            // This will trigger a save for each student individually
-            // Adding a small delay to prevent browser overload if many reports
-            await handleGenerateIndividualReport(student);
-            await new Promise(resolve => setTimeout(resolve, 500)); // 0.5 second delay
-        }
-        setMessage({ text: 'Todos los reportes individuales han sido generados.', type: 'success' });
-    };
-
-    const handleGenerateSummaryReport = async (groupName = null) => { // Added groupName parameter
-        if (!arePdfLibsLoaded) {
-            setMessage({ text: 'Las librerías de PDF aún no están cargadas. Por favor, inténtalo de nuevo en unos segundos.', type: 'error' });
-            return;
-        }
-        if (students.length === 0) {
-            setMessage({ text: 'No hay estudiantes para generar el reporte resumen.', type: 'error' });
-            return;
-        }
-
-        let groupsToReport = [];
-        if (groupName) {
-            groupsToReport = [groupName];
-        } else {
-            // If no specific group selected, generate for all unique groups
-            groupsToReport = uniqueGroups.filter(group => {
-                // Only include groups that have at least one evaluated student
-                return students.some(s => (s.group || 'Sin Grupo') === group && evaluations.some(e => e.studentId === s.id));
-            });
-            
-            if (groupsToReport.length === 0) {
-                setMessage({ text: 'No hay grupos con estudiantes evaluados para generar reportes resumen.', type: 'warning' });
-                return;
-            }
-
-            setMessage({ text: 'Generando reportes resumen para todos los grupos evaluados. Esto puede tardar un momento...', type: 'info' });
-        }
-
-        for (const currentGroupName of groupsToReport) {
-            const filteredStudentsForSummary = students.filter(student => (student.group || 'Sin Grupo') === currentGroupName);
-
-            if (filteredStudentsForSummary.length === 0) {
-                setMessage({ text: `No hay estudiantes en el grupo "${currentGroupName}" para generar el reporte resumen.`, type: 'warning' });
-                continue; // Skip to next group
-            }
-
-            setMessage({ text: `Generando reporte resumen para el grupo "${currentGroupName}", por favor espera...`, type: 'success' });
-
-            const pdfContentId = 'summary-pdf-content';
-            let tempDiv = document.createElement('div');
-            tempDiv.id = pdfContentId;
-            tempDiv.style.padding = '15mm';
-            tempDiv.style.width = '210mm';
-            tempDiv.style.boxSizing = 'border-box';
-            tempDiv.className = 'bg-white rounded-lg shadow-lg';
-
-            // Prepare data for summary table
-            let summaryTableRows = '';
-            filteredStudentsForSummary.forEach(student => {
-                const studentEvaluations = evaluations.filter(e => e.studentId === student.id);
-                let overallAverage = 0;
-                let overallQualitativeRating = 'N/A';
-                let totalEvaluations = studentEvaluations.length;
-
-                if (totalEvaluations > 0) {
-                    const sumOfAverages = studentEvaluations.reduce((sum, evalItem) => sum + evalItem.average, 0);
-                    overallAverage = sumOfAverages / totalEvaluations;
-
-                    // Determine overall qualitative rating based on the overall average
-                    if (overallAverage >= 0 && overallAverage < 2) {
-                        overallQualitativeRating = 'Previo al Inicio';
-                    } else if (overallAverage >= 2 && overallAverage < 3) {
-                        overallQualitativeRating = 'Inicio';
-                    } else if (overallAverage >= 3 && overallAverage < 4) {
-                        overallQualitativeRating = 'Proceso';
-                    } else if (overallAverage >= 4 && overallAverage < 5) {
-                        overallQualitativeRating = 'Logrado';
-                    } else if (overallAverage === 5) {
-                        overallQualitativeRating = 'Destacado';
+                currentChecklist.criteria.forEach(criterion => {
+                    const selectedLevelId = evaluationScores[criterion.id];
+                    if (selectedLevelId) {
+                        const level = currentChecklist.levels.find(l => l.id === selectedLevelId);
+                        if (level) {
+                            calculatedTotalScore += level.score;
+                            evaluatedCriteriaCount++;
+                        }
                     }
+                });
+
+                totalScore = calculatedTotalScore;
+                average = evaluatedCriteriaCount > 0 ? parseFloat((calculatedTotalScore / evaluatedCriteriaCount).toFixed(1)) : 0;
+
+                let rating = '';
+                if (average >= 0 && average < 2) {
+                    rating = 'Previo al Inicio';
+                } else if (average >= 2 && average < 3) {
+                    rating = 'Inicio';
+                } else if (average >= 3 && average < 4) {
+                    rating = 'Proceso';
+                } else if (average >= 4 && average < 5) {
+                    rating = 'Logrado';
+                } else if (average === 5) {
+                    rating = 'Destacado';
+                }
+                qualitativeRating = rating;
+            };
+
+            const renderEvaluationForm = () => {
+                if (!selectedStudentIdLocal || !selectedChecklistId || !currentChecklist) {
+                    evaluationFormContent.innerHTML = '';
+                    return;
                 }
 
-                summaryTableRows += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${student.fullName}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${student.group || 'Sin Grupo'}</td> {/* DNI removed from summary report */}
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${overallAverage.toFixed(1)}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${overallQualitativeRating}</td>
-                    </tr>
+                const student = students.find(s => s.id === selectedStudentIdLocal);
+                if (!student) {
+                    evaluationFormContent.innerHTML = '';
+                    return;
+                }
+
+                const criteriaHtml = currentChecklist.criteria.map(criterion => `
+                    <div class="mb-4">
+                        <p class="font-medium text-gray-800">${criterion.name}:</p>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            ${currentChecklist.levels.map(level => `
+                                <button type="button" data-criterion-id="${criterion.id}" data-level-id="${level.id}"
+                                    class="px-4 py-2 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105
+                                    ${levelColorClasses[level.id] || 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
+                                    ${evaluationScores[criterion.id] === level.id ? 'ring-2 ring-offset-2 ring-indigo-500' : ''}"
+                                >
+                                    ${level.name} (${level.score})
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+                evaluationFormContent.innerHTML = `
+                    <div class="border p-4 rounded-md bg-gray-50 mb-6">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Evaluando a: <span class="text-blue-700">${student.fullName}</span> con la lista "<span class="text-blue-700">${currentChecklist.name}</span>"</h3>
+                        ${criteriaHtml}
+                        <div class="mt-6 p-4 border-t border-gray-200 pt-4">
+                            <p class="text-lg font-semibold text-gray-800">Puntaje Total: <span class="text-green-600">${totalScore.toFixed(1)}</span></p>
+                            <p class="text-lg font-semibold text-gray-800">Promedio: <span class="text-green-600">${average.toFixed(1)}</span></p>
+                            <p class="text-lg font-semibold text-gray-800">Calificación Cualitativa: <span class="text-purple-600">${qualitativeRating}</span></p>
+                        </div>
+                        <div class="flex gap-4 mt-6">
+                            <button id="save-evaluation-btn" class="flex-1 px-6 py-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-md shadow-md hover:from-teal-600 hover:to-cyan-700 transition duration-300 ease-in-out transform hover:scale-105">
+                                ${editingEvaluationId ? 'Actualizar Evaluación' : 'Guardar Evaluación'}
+                            </button>
+                            <button id="reset-evaluation-btn" class="flex-1 px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-md shadow-md hover:bg-gray-400 transition duration-300 ease-in-out transform hover:scale-105">
+                                Reiniciar Formulario
+                            </button>
+                        </div>
+                        <div class="flex justify-between gap-4 mt-4">
+                            <button id="prev-student-btn" class="flex-1 px-6 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Estudiante Anterior
+                            </button>
+                            <button id="next-student-btn" class="flex-1 px-6 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-md hover:bg-blue-600 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Siguiente Estudiante
+                            </button>
+                        </div>
+                    </div>
                 `;
-            });
+
+                // Add event listeners for level selection buttons
+                evaluationFormContent.querySelectorAll('button[data-criterion-id]').forEach(button => {
+                    button.onclick = (e) => {
+                        const criterionId = e.target.dataset.criterionId;
+                        const levelId = e.target.dataset.levelId;
+                        evaluationScores = { ...evaluationScores, [criterionId]: levelId };
+                        calculateScores(); // Recalculate and update immediately
+                        renderEvaluationForm(); // Re-render to update selected state visually
+                    };
+                });
+
+                document.getElementById('save-evaluation-btn').onclick = handleSaveEvaluation;
+                document.getElementById('reset-evaluation-btn').onclick = handleResetForm;
+                document.getElementById('prev-student-btn').onclick = handlePreviousStudent;
+                document.getElementById('next-student-btn').onclick = handleNextStudent;
+
+                // Disable/enable navigation buttons
+                const filteredStudents = selectedGroupId ? students.filter(s => (s.group || 'Sin Grupo') === selectedGroupId) : [];
+                const currentStudentIndex = filteredStudents.findIndex(s => s.id === selectedStudentIdLocal);
+                document.getElementById('prev-student-btn').disabled = currentStudentIndex === 0;
+                document.getElementById('next-student-btn').disabled = currentStudentIndex === filteredStudents.length - 1;
+            };
+
+            const handleEvaluationChange = (criterionId, levelId) => {
+                evaluationScores = { ...evaluationScores, [criterionId]: levelId };
+                calculateScores();
+                renderEvaluationForm(); // Re-render to update button styles and scores
+            };
+
+            const handleSaveEvaluation = () => {
+                if (!selectedStudentIdLocal || !selectedChecklistId || !currentChecklist) {
+                    displayMessage('evaluation-message-container', 'Por favor, selecciona un estudiante y una lista de cotejo.', 'error');
+                    return;
+                }
+
+                const student = students.find(s => s.id === selectedStudentIdLocal);
+                if (!student) {
+                    displayMessage('evaluation-message-container', 'Estudiante no encontrado.', 'error');
+                    return;
+                }
+
+                const allEvaluated = currentChecklist.criteria.every(c => evaluationScores[c.id]);
+                if (!allEvaluated) {
+                    displayMessage('evaluation-message-container', 'Por favor, evalúa todos los criterios antes de guardar.', 'error');
+                    return;
+                }
+
+                const evaluationData = {
+                    id: editingEvaluationId || generateUUID(),
+                    studentId: selectedStudentIdLocal,
+                    studentFullName: student.fullName,
+                    studentGroup: student.group || '',
+                    checklistId: selectedChecklistId,
+                    checklistName: currentChecklist.name,
+                    date: new Date().toISOString().split('T')[0],
+                    scores: currentChecklist.criteria.map(criterion => {
+                        const selectedLevelId = evaluationScores[criterion.id];
+                        const level = currentChecklist.levels.find(l => l.id === selectedLevelId);
+                        return {
+                            criterionId: criterion.id,
+                            criterionName: criterion.name,
+                            levelId: selectedLevelId,
+                            levelName: level ? level.name : 'N/A',
+                            score: level ? level.score : 0
+                        };
+                    }),
+                    totalScore: totalScore,
+                    average: average,
+                    qualitativeRating: qualitativeRating
+                };
+
+                if (editingEvaluationId) {
+                    evaluations = evaluations.map(e => e.id === editingEvaluationId ? evaluationData : e);
+                    displayMessage('evaluation-message-container', 'Evaluación actualizada correctamente.', 'success');
+                } else {
+                    evaluations = [...evaluations, evaluationData];
+                    displayMessage('evaluation-message-container', 'Evaluación guardada correctamente.', 'success');
+                }
+                saveDataToLocalStorage();
+                renderSelectOptions(); // Update student list in case evaluated status changed
+            };
+
+            const handleResetForm = () => {
+                selectedStudentIdLocal = '';
+                evaluationScores = {};
+                totalScore = 0;
+                average = 0;
+                qualitativeRating = '';
+                editingEvaluationId = null;
+                displayMessage('evaluation-message-container', 'Formulario de evaluación reiniciado. Selecciona un estudiante para continuar.', 'info');
+                renderEvaluationForm(); // Clear the form content
+                renderSelectOptions(); // Reset student selection
+            };
+
+            const handleNextStudent = () => {
+                const filteredStudents = selectedGroupId ? students.filter(s => (s.group || 'Sin Grupo') === selectedGroupId) : [];
+                const currentStudentIndex = filteredStudents.findIndex(s => s.id === selectedStudentIdLocal);
+                if (currentStudentIndex < filteredStudents.length - 1) {
+                    selectedStudentIdLocal = filteredStudents[currentStudentIndex + 1].id;
+                    updateEvaluationFormForSelectedStudent();
+                } else {
+                    displayMessage('evaluation-message-container', 'No hay más estudiantes en este grupo.', 'info');
+                }
+            };
+
+            const handlePreviousStudent = () => {
+                const filteredStudents = selectedGroupId ? students.filter(s => (s.group || 'Sin Grupo') === selectedGroupId) : [];
+                const currentStudentIndex = filteredStudents.findIndex(s => s.id === selectedStudentIdLocal);
+                if (currentStudentIndex > 0) {
+                    selectedStudentIdLocal = filteredStudents[currentStudentIndex - 1].id;
+                    updateEvaluationFormForSelectedStudent();
+                } else {
+                    displayMessage('evaluation-message-container', 'No hay estudiantes anteriores en este grupo.', 'info');
+                }
+            };
+
+            const updateEvaluationFormForSelectedStudent = () => {
+                if (selectedStudentIdLocal && selectedChecklistId) {
+                    currentChecklist = checklists.find(c => c.id === selectedChecklistId);
+
+                    const existingEvaluation = evaluations.find(
+                        e => e.studentId === selectedStudentIdLocal && e.checklistId === selectedChecklistId
+                    );
+
+                    if (existingEvaluation) {
+                        editingEvaluationId = existingEvaluation.id;
+                        evaluationScores = {};
+                        existingEvaluation.scores.forEach(s => {
+                            evaluationScores[s.criterionId] = s.levelId;
+                        });
+                        displayMessage('evaluation-message-container', 'Evaluación existente cargada para edición.', 'success');
+                    } else if (currentChecklist) {
+                        editingEvaluationId = null;
+                        evaluationScores = {};
+                        currentChecklist.criteria.forEach(c => evaluationScores[c.id] = '');
+                        totalScore = 0;
+                        average = 0;
+                        qualitativeRating = '';
+                        displayMessage('evaluation-message-container', '', ''); // Clear message
+                    }
+                } else {
+                    currentChecklist = null;
+                    evaluationScores = {};
+                    totalScore = 0;
+                    average = 0;
+                    qualitativeRating = '';
+                    editingEvaluationId = null;
+                    displayMessage('evaluation-message-container', '', ''); // Clear message
+                }
+                calculateScores();
+                renderEvaluationForm();
+            };
+
+            // Event Listeners for dropdowns
+            selectGroup.onchange = (e) => {
+                selectedGroupId = e.target.value;
+                selectedStudentIdLocal = ''; // Reset student selection when group changes
+                saveDataToLocalStorage();
+                renderSelectOptions();
+                updateEvaluationFormForSelectedStudent(); // Update form if needed
+            };
+
+            selectChecklist.onchange = (e) => {
+                selectedChecklistId = e.target.value;
+                saveDataToLocalStorage();
+                updateEvaluationFormForSelectedStudent();
+            };
+
+            selectStudent.onchange = (e) => {
+                selectedStudentIdLocal = e.target.value;
+                updateEvaluationFormForSelectedStudent();
+            };
+
+            // Initial render calls
+            renderSelectOptions();
+            updateEvaluationFormForSelectedStudent(); // Call this to set initial form state based on loaded data
+        }
 
 
-            tempDiv.innerHTML = `
-                <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Reporte Resumen de Evaluaciones - Grupo: ${currentGroupName}</h2>
-                <div class="mb-4 text-sm text-gray-600 text-left">
-                    ${basicData ? `
-                        <p><span class="font-semibold">Institución:</span> ${basicData.institutionName || ''}</p>
-                        <p><span class="font-semibold">Curso:</span> ${basicData.courseName || ''}</p>
-                        <p><span class="font-semibold">Docente:</span> ${basicData.teacherName || ''}</p>
-                        <p><span class="font-semibold">Fecha del Reporte:</span> ${new Date().toISOString().split('T')[0]}</p>
-                        ${basicData.learningSessionName ? `<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span> "${basicData.learningSessionName}"</p>` : ''}
-                    ` : ''}
+        // --- Report Module ---
+        function renderReportModulePage() {
+            const pageDiv = document.getElementById('reportModule-page');
+            pageDiv.innerHTML = `
+                <div class="p-6 bg-white rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800">Módulo de Reportes (Docente)</h2>
+                    <div id="report-module-message-container"></div>
+
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Generar Reportes Individuales por Estudiante:</h3>
+                    <div class="mb-4">
+                        <label htmlFor="selectGroupForIndividualReports" class="block text-sm font-medium text-gray-700">Seleccionar Grupo para Reportes Individuales:</label>
+                        <select id="selectGroupForIndividualReports" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
+                    </div>
+                    <ul id="individual-reports-list" class="divide-y divide-gray-200 border border-gray-200 rounded-md mb-6"></ul>
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <button id="generate-all-individual-reports-btn" class="flex-1 px-6 py-2 bg-gradient-to-r from-green-600 to-lime-700 text-white font-semibold rounded-md shadow-md hover:from-green-700 hover:to-lime-800 transition duration-300 ease-in-out transform hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Generar Todos los Reportes Individuales del Grupo Seleccionado
+                        </button>
+                    </div>
+
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Generar Reporte Resumen (Registro Auxiliar):</h3>
+                    <div class="mb-4">
+                        <label htmlFor="selectGroupForSummary" class="block text-sm font-medium text-gray-700">Seleccionar Grupo para Reporte Resumen:</label>
+                        <select id="selectGroupForSummary" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></select>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <button id="generate-summary-report-btn" class="flex-1 px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-semibold rounded-md shadow-md hover:from-yellow-600 hover:to-orange-700 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <line x1="10" y1="9" x2="8" y2="9"></line>
+                            </svg>
+                            Generar Reporte Resumen del Grupo Seleccionado
+                        </button>
+                        <button id="generate-all-summary-reports-btn" class="flex-1 px-6 py-2 bg-gradient-to-r from-purple-500 to-red-600 text-white font-semibold rounded-md shadow-md hover:from-purple-600 hover:to-red-700 transition duration-300 ease-in-out transform hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Generar Reportes Resumen de Todos los Grupos
+                        </button>
+                    </div>
+                    <p class="mt-8 text-sm text-gray-600">
+                        <span class="font-bold">Nota importante sobre la seguridad:</span> Este reporte es para el estudiante. Para una protección con contraseña real que cifre el archivo PDF, se requeriría un procesamiento en un servidor, algo que esta aplicación, al ser de solo navegador, no puede ofrecer.
+                    </p>
                 </div>
-                <table class="min-w-full bg-white border border-gray-300 rounded-md shadow-sm mt-4">
-                    <thead>
-                        <tr class="bg-gray-200">
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Nombre Completo</th>
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Grupo</th> {/* DNI column removed */}
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Promedio General</th>
-                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Calificación Cualitativa</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${summaryTableRows}
-                    </tbody>
-                </table>
             `;
 
-            document.body.appendChild(tempDiv);
-
-            try {
-                const jsPDF = window.jspdf.jsPDF || window.jspdf.default || window.jsPDF;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const canvas = await window.html2canvas(tempDiv, { scale: 2 });
-                const imgData = canvas.toDataURL('image/jpeg', 1.0);
-
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-
-                const pdfPageWidth = pdf.internal.pageSize.getWidth();
-                const pdfPageHeight = pdf.internal.pageSize.getHeight();
-
-                const widthRatio = pdfPageWidth / imgWidth;
-                const finalImgWidth = pdfPageWidth;
-                const finalImgHeight = imgHeight * widthRatio;
-
-                let heightLeft = finalImgHeight;
-                let position = 0;
-
-                pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
-                heightLeft -= pdfPageHeight;
-
-                while (heightLeft > 0) {
-                    position = heightLeft - finalImgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
-                    heightLeft -= pdfPageHeight;
-                }
-
-                pdf.save(`Reporte_Resumen_Evaluaciones_${currentGroupName.replace(/\s+/g, '_')}.pdf`);
-                // Add a delay between generating PDFs to prevent browser freezing
-                await new Promise(resolve => setTimeout(resolve, 500));
-            } catch (error) {
-                console.error(`Error al generar reporte resumen PDF para el grupo ${currentGroupName}:`, error);
-                setMessage({ text: `Error al generar el reporte resumen PDF para el grupo "${currentGroupName}".`, type: 'error' });
-            } finally {
-                if (document.body.contains(tempDiv)) {
-                    document.body.removeChild(tempDiv);
-                }
-            }
-        }
-        setMessage({ text: 'Reporte(s) resumen PDF generado(s) y descargado(s) correctamente.', type: 'success' });
-    };
+            const selectGroupForIndividualReports = document.getElementById('selectGroupForIndividualReports');
+            const individualReportsList = document.getElementById('individual-reports-list');
+            const generateAllIndividualReportsBtn = document.getElementById('generate-all-individual-reports-btn');
+            const selectGroupForSummary = document.getElementById('selectGroupForSummary');
+            const generateSummaryReportBtn = document.getElementById('generate-summary-report-btn');
+            const generateAllSummaryReportsBtn = document.getElementById('generate-all-summary-reports-btn');
 
 
-    return (
-        <div className="p-6 bg-white rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Módulo de Reportes (Docente)</h2>
-            {message.text && (
-                <div className={`p-3 mb-4 rounded-md ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {message.text}
-                </div>
-            )}
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">Generar Reportes Individuales por Estudiante:</h3>
-            <div className="mb-4">
-                <label htmlFor="selectGroupForIndividualReports" className="block text-sm font-medium text-gray-700">Seleccionar Grupo para Reportes Individuales:</label>
-                <select
-                    id="selectGroupForIndividualReports"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    value={selectedGroupForIndividualReports}
-                    onChange={(e) => setSelectedGroupForIndividualReports(e.target.value)}
-                >
-                    <option value="">-- Todos los Grupos --</option>
-                    {uniqueGroups.map(group => (
-                        <option key={group} value={group}>{group}</option>
-                    ))}
-                </select>
-            </div>
-            {filteredStudentsForIndividualReports.length === 0 ? (
-                <p className="text-gray-500">No hay estudiantes en el grupo seleccionado o no hay estudiantes para generar reportes.</p>
-            ) : (
-                <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md mb-6">
-                    {filteredStudentsForIndividualReports.map((student) => (
-                        <li key={student.id} className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 hover:bg-gray-100">
-                            {/* DNI removed from individual report student display */}
-                            <span className="text-gray-800 font-medium mb-2 md:mb-0">{student.fullName} {student.group && ` - Grupo: ${student.group}`}</span>
-                            <button
-                                onClick={() => handleGenerateIndividualReport(student)}
-                                className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md shadow-md hover:from-indigo-600 hover:to-purple-700 transition duration-300 ease-in-out transform hover:scale-105"
-                            >
+            const uniqueGroups = [...new Set(students.map(student => student.group || 'Sin Grupo'))].sort();
+
+            const renderIndividualReportsList = () => {
+                const selectedGroup = selectGroupForIndividualReports.value;
+                const filteredStudents = selectedGroup
+                    ? students.filter(student => (student.group || 'Sin Grupo') === selectedGroup)
+                    : students;
+
+                if (filteredStudents.length === 0) {
+                    individualReportsList.innerHTML = '<p class="text-gray-500 p-4">No hay estudiantes en el grupo seleccionado o no hay estudiantes para generar reportes.</p>';
+                    generateAllIndividualReportsBtn.disabled = true;
+                } else {
+                    individualReportsList.innerHTML = filteredStudents.map(student => `
+                        <li class="p-4 flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50 hover:bg-gray-100">
+                            <span class="text-gray-800 font-medium mb-2 md:mb-0">${student.fullName} ${student.group ? ` - Grupo: ${student.group}` : ''}</span>
+                            <button data-student-id="${student.id}" class="generate-individual-pdf-btn px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-md shadow-md hover:from-indigo-600 hover:to-purple-700 transition duration-300 ease-in-out transform hover:scale-105">
                                 Generar PDF
                             </button>
                         </li>
-                    ))}
-                </ul>
-            )}
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <button
-                    onClick={handleGenerateAllIndividualReports}
-                    className="flex-1 px-6 py-2 bg-gradient-to-r from-green-600 to-lime-700 text-white font-semibold rounded-md shadow-md hover:from-green-700 hover:to-lime-800 transition duration-300 ease-in-out transform hover:scale-105"
-                >
-                    <IconDownload className="inline-block mr-2" />
-                    Generar Todos los Reportes Individuales del Grupo Seleccionado
-                </button>
-            </div>
+                    `).join('');
+                    generateAllIndividualReportsBtn.disabled = false;
 
-            <h3 className="text-xl font-semibold mb-4 text-gray-700">Generar Reporte Resumen (Registro Auxiliar):</h3>
-            <div className="mb-4">
-                <label htmlFor="selectGroupForSummary" className="block text-sm font-medium text-gray-700">Seleccionar Grupo para Reporte Resumen:</label>
-                <select
-                    id="selectGroupForSummary"
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    value={selectedGroupForSummary}
-                    onChange={(e) => setSelectedGroupForSummary(e.target.value)}
-                >
-                    <option value="">-- Seleccionar Grupo --</option>
-                    {uniqueGroups.map(group => (
-                        <option key={group} value={group}>{group}</option>
-                    ))}
-                </select>
-            </div>
-            <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <button
-                    onClick={() => handleGenerateSummaryReport(selectedGroupForSummary)} // Pass the selected group
-                    disabled={!selectedGroupForSummary} // Disable if no group is selected
-                    className="flex-1 px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white font-semibold rounded-md shadow-md hover:from-yellow-600 hover:to-orange-700 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <IconFileText className="inline-block mr-2" />
-                    Generar Reporte Resumen del Grupo Seleccionado
-                </button>
-                 {(
-                    <button
-                        onClick={() => handleGenerateSummaryReport(null)} // Explicitly generate for all groups
-                        className="flex-1 px-6 py-2 bg-gradient-to-r from-purple-500 to-red-600 text-white font-semibold rounded-md shadow-md hover:from-purple-600 hover:to-red-700 transition duration-300 ease-in-out transform hover:scale-105"
-                    >
-                        <IconDownload className="inline-block mr-2" />
-                        Generar Reportes Resumen de Todos los Grupos
-                    </button>
-                )}
-            </div>
-            <p className="mt-8 text-sm text-gray-600">
-                <span className="font-bold">Nota importante sobre la seguridad:</span> Este reporte es para el DNI del estudiante. Para una protección con contraseña real que cifre el archivo PDF, se requeriría un procesamiento en un servidor, algo que esta aplicación, al ser de solo navegador, no puede ofrecer.
-            </p>
-        </div>
-    );
-};
-
-
-// Componente Principal de la Aplicación
-const App = () => {
-    const { basicData, setBasicData, students, setStudents, checklists, setChecklists, evaluations, setEvaluations, selectedGroupId, setSelectedGroupId, selectedChecklistId, setSelectedChecklistId } = useLocalStorageData();
-    const [currentPage, setCurrentPage] = useState('basicData'); // State for navigation
-    const [isMenuOpen, setIsMenuOpen] = useState(false); // State for hamburger menu
-    const [arePdfLibsLoaded, setArePdfLibsLoaded] = useState(false); // State to track PDF libraries loading
-
-    // Page titles mapping
-    const pageTitles = {
-        basicData: 'Datos Básicos',
-        studentManagement: 'Gestión de Estudiantes',
-        checklistManagement: 'Listas de Cotejo',
-        evaluation: 'Módulo de Evaluación',
-        reportModule: 'Reportes Docente'
-    };
-
-    // Dynamically load jsPDF and html2canvas via script tags
-    useEffect(() => {
-        let jspdfLoaded = false;
-        let html2canvasLoaded = false;
-
-        const checkAllLoaded = () => {
-            if (jspdfLoaded && html2canvasLoaded) {
-                setArePdfLibsLoaded(true);
-            }
-        };
-
-        const loadScript = (src, id, globalVarCheck) => {
-            const existingScript = document.getElementById(id);
-            if (existingScript) {
-                // If script tag exists, check if its global variable is available
-                // This covers cases where script might have loaded but its global is not yet populated
-                const checkInterval = setInterval(() => {
-                    const isGlobalVarReady = (globalVarCheck === 'jsPDF' && (window.jspdf && (window.jspdf.jsPDF || window.jspdf.default))) ||
-                                             (globalVarCheck === 'html2canvas' && window.html2canvas);
-
-                    if (isGlobalVarReady) {
-                        clearInterval(checkInterval);
-                        if (id === 'jspdf-script') jspdfLoaded = true;
-                        if (id === 'html2canvas-script') html2canvasLoaded = true;
-                        checkAllLoaded();
-                    }
-                }, 50); // Check every 50ms
-                return; // Script already being handled
-            }
-
-            const script = document.createElement('script');
-            script.src = src;
-            script.id = id;
-            script.async = true;
-            script.onload = () => {
-                // After script tag loads, give a brief moment for its global variable to be fully set up
-                const checkInterval = setInterval(() => {
-                    const isGlobalVarReady = (globalVarCheck === 'jsPDF' && (window.jspdf && (window.jspdf.jsPDF || window.jspdf.default))) ||
-                                             (globalVarCheck === 'html2canvas' && window.html2canvas);
-
-                    if (isGlobalVarReady) {
-                        clearInterval(checkInterval);
-                        if (id === 'jspdf-script') jspdfLoaded = true;
-                        if (id === 'html2canvas-script') html2canvasLoaded = true;
-                        checkAllLoaded();
-                    }
-                }, 50); // Check every 50ms
+                    individualReportsList.querySelectorAll('.generate-individual-pdf-btn').forEach(button => {
+                        button.onclick = async (e) => {
+                            const studentId = e.currentTarget.dataset.studentId;
+                            const student = students.find(s => s.id === studentId);
+                            if (student) await handleGenerateIndividualReport(student);
+                        };
+                    });
+                }
             };
-            script.onerror = () => {
-                console.error(`Failed to load script: ${src}`);
-                // If a script fails to load, PDF functionality will not work, so we don't set arePdfLibsLoaded to true.
+
+            const populateGroupSelects = () => {
+                const groupOptions = '<option value="">-- Todos los Grupos --</option>' + uniqueGroups.map(group => `
+                    <option value="${group}">${group}</option>
+                `).join('');
+                selectGroupForIndividualReports.innerHTML = groupOptions;
+                selectGroupForSummary.innerHTML = '<option value="">-- Seleccionar Grupo --</option>' + uniqueGroups.map(group => `
+                    <option value="${group}">${group}</option>
+                `).join('');
             };
-            document.body.appendChild(script);
-        };
 
-        // Load jsPDF
-        loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'jspdf-script', 'jsPDF');
-        // Load html2canvas
-        loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'html2canvas-script', 'html2canvas');
+            // Event Listeners
+            selectGroupForIndividualReports.onchange = renderIndividualReportsList;
+            selectGroupForSummary.onchange = (e) => {
+                const selected = e.target.value;
+                generateSummaryReportBtn.disabled = !selected;
+            };
 
-        // Cleanup function for scripts if component unmounts (though unlikely in this context)
-        return () => {
-            const jspdfScript = document.getElementById('jspdf-script');
-            const html2canvasScript = document.getElementById('html2canvas-script');
-            if (jspdfScript) jspdfScript.remove();
-            if (html2canvasScript) html2canvasScript.remove();
-        };
-    }, []);
-
-
-    const renderPage = () => {
-        return (
-            <AppContext.Provider value={{ basicData, setBasicData, students, setStudents, checklists, setChecklists, evaluations, setEvaluations, selectedGroupId, setSelectedGroupId, selectedChecklistId, setSelectedChecklistId, arePdfLibsLoaded }}>
-                {(() => {
-                    switch (currentPage) {
-                        case 'basicData':
-                            return <BasicData />;
-                        case 'studentManagement':
-                            return <StudentManagement />;
-                        case 'checklistManagement':
-                            return <ChecklistManagement />;
-                        case 'evaluation':
-                            return <EvaluationModule />;
-                        case 'reportModule':
-                            return <ReportModule />;
-                        default:
-                            return <BasicData />;
-                    }
-                })()}
-            </AppContext.Provider>
-        );
-    };
-
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 text-gray-900 flex flex-col">
-            <style>
-                {`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-                body {
-                    font-family: 'Inter', sans-serif;
+            generateAllIndividualReportsBtn.onclick = async () => {
+                if (!arePdfLibsLoaded) {
+                    displayMessage('report-module-message-container', 'Las librerías de PDF aún no están cargadas. Por favor, inténtalo de nuevo en unos segundos.', 'error');
+                    return;
                 }
-                /* Custom scrollbar for better aesthetics */
-                ::-webkit-scrollbar {
-                    width: 8px;
-                    height: 8px;
+                const selectedGroup = selectGroupForIndividualReports.value;
+                const studentsToReport = selectedGroup
+                    ? students.filter(student => (student.group || 'Sin Grupo') === selectedGroup)
+                    : students;
+                if (studentsToReport.length === 0) {
+                    displayMessage('report-module-message-container', 'No hay estudiantes en el grupo seleccionado para generar reportes.', 'error');
+                    return;
                 }
-                ::-webkit-scrollbar-track {
-                    background: #f1f1f1;
-                    border-radius: 10px;
-                }
-                ::-webkit-scrollbar-thumb {
-                    background: #888;
-                    border-radius: 10px;
-                }
-                ::-webkit-scrollbar-thumb:hover {
-                    background: #555;
-                }
-                `}
-            </style>
-            {/* Header */}
-            <header className="bg-gradient-to-r from-indigo-700 to-blue-800 text-white shadow-md p-4 flex items-center justify-between sticky top-0 z-10 rounded-b-lg">
-                <h1 className="text-xl md:text-3xl font-bold">
-                    Gestión de Evaluación de Estudiantes
-                </h1>
-                {/* Hamburger menu button */}
-                <button
-                    className="md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    aria-label="Toggle navigation menu"
-                >
-                    {isMenuOpen ? <IconX className="w-7 h-7" /> : <IconMenu className="w-7 h-7" />}
-                </button>
-                {/* Desktop Navigation */}
-                <nav className="hidden md:flex space-x-4">
-                    <button onClick={() => setCurrentPage('basicData')} className={`px-4 py-2 rounded-md transition duration-300 ${currentPage === 'basicData' ? 'bg-white text-indigo-700 font-semibold shadow' : 'text-white hover:bg-indigo-600'}`}>
-                        <IconHome className="inline-block mr-2" />
-                        Datos Básicos
-                    </button>
-                    <button onClick={() => setCurrentPage('studentManagement')} className={`px-4 py-2 rounded-md transition duration-300 ${currentPage === 'studentManagement' ? 'bg-white text-indigo-700 font-semibold shadow' : 'text-white hover:bg-indigo-600'}`}>
-                        <IconUsers className="inline-block mr-2" />
-                        Estudiantes
-                    </button>
-                    <button onClick={() => setCurrentPage('checklistManagement')} className={`px-4 py-2 rounded-md transition duration-300 ${currentPage === 'checklistManagement' ? 'bg-white text-indigo-700 font-semibold shadow' : 'text-white hover:bg-indigo-600'}`}>
-                        <IconClipboardCheck className="inline-block mr-2" />
-                        Listas de Cotejo
-                    </button>
-                    <button onClick={() => setCurrentPage('evaluation')} className={`px-4 py-2 rounded-md transition duration-300 ${currentPage === 'evaluation' ? 'bg-white text-indigo-700 font-semibold shadow' : 'text-white hover:bg-indigo-600'}`}>
-                        <IconEdit className="inline-block mr-2" />
-                        Evaluación
-                    </button>
-                    {/* Removed 'Calificaciones Estudiantes' button */}
-                    <button onClick={() => setCurrentPage('reportModule')} className={`px-4 py-2 rounded-md transition duration-300 ${currentPage === 'reportModule' ? 'bg-white text-indigo-700 font-semibold shadow' : 'text-white hover:bg-indigo-600'}`}>
-                        <IconFileText className="inline-block mr-2" />
-                        Reportes
-                    </button>
-                </nav>
-            </header>
 
-            {/* Mobile Navigation (Hamburger Menu) */}
-            {isMenuOpen && (
-                <nav className="md:hidden bg-indigo-700 text-white shadow-lg py-2 rounded-b-lg">
-                    <ul className="flex flex-col items-start px-4">
-                        <li>
-                            <button onClick={() => { setCurrentPage('basicData'); setIsMenuOpen(false); }} className="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
-                                <IconHome className="inline-block mr-2" />
-                                Datos Básicos
-                            </button>
+                displayMessage('report-module-message-container', 'Generando reportes individuales para todos los estudiantes del grupo seleccionado. Esto puede tardar un momento...', 'info');
+                for (const student of studentsToReport) {
+                    await handleGenerateIndividualReport(student);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                displayMessage('report-module-message-container', 'Todos los reportes individuales han sido generados.', 'success');
+            };
+
+            generateSummaryReportBtn.onclick = async () => {
+                const selectedGroup = selectGroupForSummary.value;
+                if (!selectedGroup) {
+                    displayMessage('report-module-message-container', 'Por favor, selecciona un grupo para generar el reporte resumen.', 'error');
+                    return;
+                }
+                await handleGenerateSummaryReport(selectedGroup);
+            };
+
+            generateAllSummaryReportsBtn.onclick = async () => {
+                await handleGenerateSummaryReport(null); // Pass null to indicate all groups
+            };
+
+            const handleGenerateIndividualReport = async (student) => {
+                if (!arePdfLibsLoaded) {
+                    displayMessage('report-module-message-container', 'Las librerías de PDF aún no están cargadas. Por favor, inténtalo de nuevo en unos segundos.', 'error');
+                    return;
+                }
+
+                displayMessage('report-module-message-container', `Generando reporte para ${student.fullName}, por favor espera...`, 'success');
+
+                const studentEvaluations = evaluations.filter(e => e.studentId === student.id);
+
+                if (studentEvaluations.length === 0) {
+                    displayMessage('report-module-message-container', `No hay calificaciones para ${student.fullName}.`, 'error');
+                    return;
+                }
+
+                const pdfContentId = 'individual-pdf-content';
+                let tempDiv = document.createElement('div');
+                tempDiv.id = pdfContentId;
+                tempDiv.style.padding = '15mm';
+                tempDiv.style.width = '210mm';
+                tempDiv.style.boxSizing = 'border-box';
+                tempDiv.className = 'bg-white rounded-lg shadow-lg';
+
+                let evaluationsHtml = studentEvaluations.map(evalItem => {
+                    const criterionDetails = evalItem.scores.map(scoreItem => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${scoreItem.criterionName}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${scoreItem.levelName}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${scoreItem.score}</td>
+                        </tr>
+                    `).join('');
+
+                    return `
+                        <li class="py-4">
+                            <p class="font-semibold text-lg text-blue-700">${evalItem.checklistName} - <span class="text-gray-600 font-normal text-base">${evalItem.date}</span></p>
+                            <p class="text-md font-medium text-gray-800 mt-2">Promedio: <span class="text-green-600">${evalItem.average.toFixed(1)}</span></p>
+                            <p class="text-md font-medium text-gray-800">Calificación: <span class="text-purple-600">${evalItem.qualitativeRating}</span></p>
+                            <div class="mt-2 text-sm text-gray-600">
+                                <p class="font-semibold">Detalle de criterios:</p>
+                                <table class="min-w-full bg-white border border-gray-300 rounded-md shadow-sm mt-2">
+                                    <thead>
+                                        <tr class="bg-gray-200">
+                                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Criterio</th>
+                                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Nivel</th>
+                                            <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Puntaje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${criterionDetails}
+                                    </tbody>
+                                </table>
+                            </div>
                         </li>
-                        <li>
-                            <button onClick={() => { setCurrentPage('studentManagement'); setIsMenuOpen(false); }} className="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
-                                <IconUsers className="inline-block mr-2" />
-                                Gestión de Estudiantes
-                            </button>
-                        </li>
-                        <li>
-                            <button onClick={() => { setCurrentPage('checklistManagement'); setIsMenuOpen(false); }} className="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
-                                <IconClipboardCheck className="inline-block mr-2" />
-                                Listas de Cotejo
-                            </button>
-                        </li>
-                        <li>
-                            <button onClick={() => { setCurrentPage('evaluation'); setIsMenuOpen(false); }} className="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
-                                <IconEdit className="inline-block mr-2" />
-                                Módulo de Evaluación
-                            </button>
-                        </li>
-                        {/* Removed 'Calificaciones Estudiantes' button for mobile */}
-                        <li>
-                            <button onClick={() => { setCurrentPage('reportModule'); setIsMenuOpen(false); }} className="block w-full text-left py-2 px-3 rounded-md hover:bg-indigo-600 transition duration-300">
-                                <IconFileText className="inline-block mr-2" />
-                                Reportes Docente
-                            </button>
-                        </li>
+                    `;
+                }).join('');
+
+                tempDiv.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Reporte de Calificaciones Individual</h2>
+                    <div class="mb-4 text-sm text-gray-600 text-left">
+                        ${basicData.institutionName ? `<p><span class="font-semibold">Institución:</span> ${basicData.institutionName}</p>` : ''}
+                        ${basicData.courseName ? `<p><span class="font-semibold">Curso:</span> ${basicData.courseName}</p>` : ''}
+                        ${basicData.teacherName ? `<p><span class="font-semibold">Docente:</span> ${basicData.teacherName}</p>` : ''}
+                        ${basicData.date ? `<p><span class="font-semibold">Fecha del Reporte:</span> ${basicData.date}</p>` : ''}
+                        ${basicData.learningSessionName ? `<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span> "${basicData.learningSessionName}"</p>` : ''}
+                    </div>
+                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Estudiante: ${student.fullName} ${student.group ? `(Grupo: ${student.group})` : ''}</h3>
+                    <ul class="divide-y divide-gray-200">
+                        ${evaluationsHtml}
                     </ul>
-                </nav>
-            )}
+                `;
 
-            {/* Main Content Area */}
-            <main className="flex-1 p-4 md:p-8">
-                <h2 className="text-3xl font-extrabold text-gray-800 mb-6 border-b-2 border-indigo-300 pb-2">{pageTitles[currentPage]}</h2>
-                {renderPage()}
-            </main>
+                document.body.appendChild(tempDiv);
 
-            {/* Footer */}
-            <footer className="bg-gray-800 text-white text-center p-4 rounded-t-lg">
-                <p>&copy; {new Date().getFullYear()} Aplicación de Evaluación de Estudiantes. Desarrollado por YJMS. Todos los derechos reservados.</p>
-            </footer>
-        </div>
-    );
-};
+                try {
+                    const jsPDF = window.jspdf.jsPDF || window.jspdf.default || window.jsPDF;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const canvas = await window.html2canvas(tempDiv, { scale: 2 });
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
-export default App;
+                    const imgWidth = canvas.width;
+                    const imgHeight = canvas.height;
+
+                    const pdfPageWidth = pdf.internal.pageSize.getWidth();
+                    const pdfPageHeight = pdf.internal.pageSize.getHeight();
+
+                    const widthRatio = pdfPageWidth / imgWidth;
+                    const finalImgWidth = pdfPageWidth;
+                    const finalImgHeight = imgHeight * widthRatio;
+
+                    let heightLeft = finalImgHeight;
+                    let position = 0;
+
+                    pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
+                    heightLeft -= pdfPageHeight;
+
+                    while (heightLeft > 0) {
+                        position = heightLeft - finalImgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
+                        heightLeft -= pdfPageHeight;
+                    }
+
+                    pdf.save(`Reporte_Calificaciones_${student.fullName.replace(/\s+/g, '_')}.pdf`);
+                    displayMessage('report-module-message-container', 'Reporte PDF generado y descargado correctamente.', 'success');
+                } catch (error) {
+                    console.error("Error al generar PDF individual:", error);
+                    displayMessage('report-module-message-container', 'Error al generar el reporte PDF.', 'error');
+                } finally {
+                    if (document.body.contains(tempDiv)) {
+                        document.body.removeChild(tempDiv);
+                    }
+                }
+            };
+
+            const handleGenerateSummaryReport = async (groupName = null) => {
+                if (!arePdfLibsLoaded) {
+                    displayMessage('report-module-message-container', 'Las librerías de PDF aún no están cargadas. Por favor, inténtalo de nuevo en unos segundos.', 'error');
+                    return;
+                }
+                if (students.length === 0) {
+                    displayMessage('report-module-message-container', 'No hay estudiantes para generar el reporte resumen.', 'error');
+                    return;
+                }
+
+                let groupsToReport = [];
+                if (groupName) {
+                    groupsToReport = [groupName];
+                } else {
+                    groupsToReport = uniqueGroups.filter(group => {
+                        return students.some(s => (s.group || 'Sin Grupo') === group && evaluations.some(e => e.studentId === s.id));
+                    });
+
+                    if (groupsToReport.length === 0) {
+                        displayMessage('report-module-message-container', 'No hay grupos con estudiantes evaluados para generar reportes resumen.', 'warning');
+                        return;
+                    }
+                    displayMessage('report-module-message-container', 'Generando reportes resumen para todos los grupos evaluados. Esto puede tardar un momento...', 'info');
+                }
+
+                for (const currentGroupName of groupsToReport) {
+                    const filteredStudentsForSummary = students.filter(student => (student.group || 'Sin Grupo') === currentGroupName);
+
+                    if (filteredStudentsForSummary.length === 0) {
+                        displayMessage('report-module-message-container', `No hay estudiantes en el grupo "${currentGroupName}" para generar el reporte resumen.`, 'warning');
+                        continue;
+                    }
+
+                    displayMessage('report-module-message-container', `Generando reporte resumen para el grupo "${currentGroupName}", por favor espera...`, 'success');
+
+                    const pdfContentId = 'summary-pdf-content';
+                    let tempDiv = document.createElement('div');
+                    tempDiv.id = pdfContentId;
+                    tempDiv.style.padding = '15mm';
+                    tempDiv.style.width = '210mm';
+                    tempDiv.style.boxSizing = 'border-box';
+                    tempDiv.className = 'bg-white rounded-lg shadow-lg';
+
+                    let summaryTableRows = '';
+                    filteredStudentsForSummary.forEach(student => {
+                        const studentEvaluations = evaluations.filter(e => e.studentId === student.id);
+                        let overallAverage = 0;
+                        let overallQualitativeRating = 'N/A';
+                        let totalEvaluations = studentEvaluations.length;
+
+                        if (totalEvaluations > 0) {
+                            const sumOfAverages = studentEvaluations.reduce((sum, evalItem) => sum + evalItem.average, 0);
+                            overallAverage = sumOfAverages / totalEvaluations;
+
+                            if (overallAverage >= 0 && overallAverage < 2) {
+                                overallQualitativeRating = 'Previo al Inicio';
+                            } else if (overallAverage >= 2 && overallAverage < 3) {
+                                overallQualitativeRating = 'Inicio';
+                            } else if (overallAverage >= 3 && overallAverage < 4) {
+                                overallQualitativeRating = 'Proceso';
+                            } else if (overallAverage >= 4 && overallAverage < 5) {
+                                overallQualitativeRating = 'Logrado';
+                            } else if (overallAverage === 5) {
+                                overallQualitativeRating = 'Destacado';
+                            }
+                        }
+
+                        summaryTableRows += `
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-2 px-4 border-b text-sm text-gray-800">${student.fullName}</td>
+                                <td class="py-2 px-4 border-b text-sm text-gray-800">${student.group || 'Sin Grupo'}</td>
+                                <td class="py-2 px-4 border-b text-sm text-gray-800">${overallAverage.toFixed(1)}</td>
+                                <td class="py-2 px-4 border-b text-sm text-gray-800">${overallQualitativeRating}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tempDiv.innerHTML = `
+                        <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Reporte Resumen de Evaluaciones - Grupo: ${currentGroupName}</h2>
+                        <div class="mb-4 text-sm text-gray-600 text-left">
+                            ${basicData.institutionName ? `<p><span class="font-semibold">Institución:</span> ${basicData.institutionName}</p>` : ''}
+                            ${basicData.courseName ? `<p><span class="font-semibold">Curso:</span> ${basicData.courseName}</p>` : ''}
+                            ${basicData.teacherName ? `<p><span class="font-semibold">Docente:</span> ${basicData.teacherName}</p>` : ''}
+                            <p><span class="font-semibold">Fecha del Reporte:</span> ${new Date().toISOString().split('T')[0]}</p>
+                            ${basicData.learningSessionName ? `<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span> "${basicData.learningSessionName}"</p>` : ''}
+                        </div>
+                        <table class="min-w-full bg-white border border-gray-300 rounded-md shadow-sm mt-4">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Nombre Completo</th>
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Grupo</th>
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Promedio General</th>
+                                    <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Calificación Cualitativa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${summaryTableRows}
+                            </tbody>
+                        </table>
+                    `;
+
+                    document.body.appendChild(tempDiv);
+
+                    try {
+                        const jsPDF = window.jspdf.jsPDF || window.jspdf.default || window.jsPDF;
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const canvas = await window.html2canvas(tempDiv, { scale: 2 });
+                        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+                        const imgWidth = canvas.width;
+                        const imgHeight = canvas.height;
+
+                        const pdfPageWidth = pdf.internal.pageSize.getWidth();
+                        const pdfPageHeight = pdf.internal.pageSize.getHeight();
+
+                        const widthRatio = pdfPageWidth / imgWidth;
+                        const finalImgWidth = pdfPageWidth;
+                        const finalImgHeight = imgHeight * widthRatio;
+
+                        let heightLeft = finalImgHeight;
+                        let position = 0;
+
+                        pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
+                        heightLeft -= pdfPageHeight;
+
+                        while (heightLeft > 0) {
+                            position = heightLeft - finalImgHeight;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
+                            heightLeft -= pdfPageHeight;
+                        }
+
+                        pdf.save(`Reporte_Resumen_Evaluaciones_${currentGroupName.replace(/\s+/g, '_')}.pdf`);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    } catch (error) {
+                        console.error(`Error al generar reporte resumen PDF para el grupo ${currentGroupName}:`, error);
+                        displayMessage('report-module-message-container', `Error al generar el reporte resumen PDF para el grupo "${currentGroupName}".`, 'error');
+                    } finally {
+                        if (document.body.contains(tempDiv)) {
+                            document.body.removeChild(tempDiv);
+                        }
+                    }
+                }
+                displayMessage('report-module-message-container', 'Reporte(s) resumen PDF generado(s) y descargado(s) correctamente.', 'success');
+            };
+
+
+            // Initial render
+            populateGroupSelects();
+            renderIndividualReportsList(); // Initial render for individual reports
+            generateSummaryReportBtn.disabled = !selectGroupForSummary.value; // Initial state for summary button
+        }
+
+
+        // --- App Initialization & Navigation ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            loadDataFromLocalStorage(); // Load data on app start
+            renderPage(); // Render the initial page
+
+            // Dynamic PDF library loading
+            let jspdfLoaded = false;
+            let html2canvasLoaded = false;
+
+            const checkAllLoaded = () => {
+                if (jspdfLoaded && html2canvasLoaded) {
+                    arePdfLibsLoaded = true;
+                    console.log('PDF libraries loaded successfully.');
+                }
+            };
+
+            const loadScript = (src, id, globalVarCheck) => {
+                const existingScript = document.getElementById(id);
+                if (existingScript) {
+                    const checkInterval = setInterval(() => {
+                        const isGlobalVarReady = (globalVarCheck === 'jsPDF' && (window.jspdf && (window.jspdf.jsPDF || window.jspdf.default))) ||
+                                                 (globalVarCheck === 'html2canvas' && window.html2canvas);
+                        if (isGlobalVarReady) {
+                            clearInterval(checkInterval);
+                            if (id === 'jspdf-script') jspdfLoaded = true;
+                            if (id === 'html2canvas-script') html2canvasLoaded = true;
+                            checkAllLoaded();
+                        }
+                    }, 50);
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = src;
+                script.id = id;
+                script.async = true;
+                script.onload = () => {
+                    const checkInterval = setInterval(() => {
+                        const isGlobalVarReady = (globalVarCheck === 'jsPDF' && (window.jspdf && (window.jspdf.jsPDF || window.jspdf.default))) ||
+                                                 (globalVarCheck === 'html2canvas' && window.html2canvas);
+                        if (isGlobalVarReady) {
+                            clearInterval(checkInterval);
+                            if (id === 'jspdf-script') jspdfLoaded = true;
+                            if (id === 'html2canvas-script') html2canvasLoaded = true;
+                            checkAllLoaded();
+                        }
+                    }, 50);
+                };
+                script.onerror = () => {
+                    console.error(`Failed to load script: ${src}`);
+                };
+                document.body.appendChild(script);
+            };
+
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', 'jspdf-script', 'jsPDF');
+            loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'html2canvas-script', 'html2canvas');
+
+            // Navigation event listeners
+            document.getElementById('nav-basicData').onclick = () => { currentPage = 'basicData'; renderPage(); };
+            document.getElementById('nav-studentManagement').onclick = () => { currentPage = 'studentManagement'; renderPage(); };
+            document.getElementById('nav-checklistManagement').onclick = () => { currentPage = 'checklistManagement'; renderPage(); };
+            document.getElementById('nav-evaluation').onclick = () => { currentPage = 'evaluation'; renderPage(); };
+            document.getElementById('nav-reportModule').onclick = () => { currentPage = 'reportModule'; renderPage(); };
+
+            // Mobile menu toggle
+            const menuToggle = document.getElementById('menu-toggle');
+            const mobileNav = document.getElementById('mobile-nav');
+            const menuIconOpen = document.getElementById('menu-icon-open');
+            const menuIconClose = document.getElementById('menu-icon-close');
+
+            menuToggle.onclick = () => {
+                mobileNav.classList.toggle('hidden');
+                menuIconOpen.classList.toggle('hidden');
+                menuIconClose.classList.toggle('hidden');
+            };
+
+            // Close mobile menu when a navigation item is clicked
+            mobileNav.querySelectorAll('button').forEach(button => {
+                button.onclick = (e) => {
+                    currentPage = e.currentTarget.dataset.page;
+                    mobileNav.classList.add('hidden');
+                    menuIconOpen.classList.remove('hidden');
+                    menuIconClose.classList.add('hidden');
+                    renderPage();
+                };
+            });
+        });
+
+    </script>
+</body>
+</html>
