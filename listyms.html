@@ -1317,7 +1317,7 @@
                     return;
                 }
 
-                displayMessage('report-module-message-container', `Generando reporte para ${student.fullName}, por favor espera...`, 'success');
+                displayMessage('report-module-message-container', `Generando reporte para ${student.fullName}, por favor espera...`, 'info');
 
                 const studentEvaluations = evaluations.filter(e => e.studentId === student.id);
 
@@ -1329,19 +1329,64 @@
                 const pdfContentId = 'individual-pdf-content';
                 let tempDiv = document.createElement('div');
                 tempDiv.id = pdfContentId;
-                tempDiv.style.padding = '15mm';
-                tempDiv.style.width = '210mm';
+                tempDiv.style.padding = '10mm'; // Reduce padding slightly
+                tempDiv.style.width = '280mm'; // Approx A4 landscape width (297mm - 17mm margins)
                 tempDiv.style.boxSizing = 'border-box';
-                tempDiv.className = 'bg-white rounded-lg shadow-lg';
+                tempDiv.className = 'bg-white rounded-lg shadow-lg text-sm'; // Smaller text to fit more
 
-                let summaryTableRows = studentEvaluations.map(evalItem => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.checklistName}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.date}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.average.toFixed(1)}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.qualitativeRating}</td>
-                    </tr>
-                `).join('');
+                let evaluationsDetailsHtml = '';
+
+                // Outer table for all evaluations
+                evaluationsDetailsHtml += `
+                    <table class="min-w-full bg-white border border-gray-300 rounded-md shadow-sm mt-4">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Lista de Cotejo</th>
+                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Fecha</th>
+                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Promedio</th>
+                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Calificación Cualitativa</th>
+                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Detalle de Criterios</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                studentEvaluations.forEach(evalItem => {
+                    let criterionDetailsTable = `
+                        <table class="min-w-full text-xs"> <!-- Smaller font for inner table -->
+                            <thead>
+                                <tr class="bg-gray-100">
+                                    <th class="py-1 px-2 border-b text-left font-semibold text-gray-700">Criterio</th>
+                                    <th class="py-1 px-2 border-b text-left font-semibold text-gray-700">Nivel</th>
+                                    <th class="py-1 px-2 border-b text-left font-semibold text-gray-700">Puntaje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    evalItem.scores.forEach(scoreItem => {
+                        criterionDetailsTable += `
+                            <tr>
+                                <td class="py-1 px-2 border-b text-gray-800">${scoreItem.criterionName}</td>
+                                <td class="py-1 px-2 border-b text-gray-800">${scoreItem.levelName}</td>
+                                <td class="py-1 px-2 border-b text-gray-800">${scoreItem.score}</td>
+                            </tr>
+                        `;
+                    });
+                    criterionDetailsTable += `</tbody></table>`;
+
+
+                    evaluationsDetailsHtml += `
+                        <tr class="hover:bg-gray-50 align-top"> <!-- Align to top for multi-line cells -->
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.checklistName}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.date}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.average.toFixed(1)}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${evalItem.qualitativeRating}</td>
+                            <td class="py-2 px-4 border-b text-sm text-gray-800">${criterionDetailsTable}</td>
+                        </tr>
+                    `;
+                });
+
+                evaluationsDetailsHtml += `</tbody></table>`;
 
                 tempDiv.innerHTML = `
                     <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Reporte de Calificaciones Individual</h2>
@@ -1353,57 +1398,50 @@
                         ${basicData.learningSessionName ? `<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span> "${basicData.learningSessionName}"</p>` : ''}
                     </div>
                     <h3 class="text-xl font-semibold mb-4 text-gray-700">Estudiante: ${student.fullName} ${student.group ? `(Grupo: ${student.group})` : ''}</h3>
-                    <table class="min-w-full bg-white border border-gray-300 rounded-md shadow-sm mt-4">
-                        <thead>
-                            <tr class="bg-gray-200">
-                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Lista de Cotejo</th>
-                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Fecha</th>
-                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Promedio</th>
-                                <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Calificación Cualitativa</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${summaryTableRows}
-                        </tbody>
-                    </table>
+                    ${evaluationsDetailsHtml}
                 `;
 
                 document.body.appendChild(tempDiv);
 
                 try {
                     const jsPDF = window.jspdf.jsPDF || window.jspdf.default || window.jsPDF;
-                    const pdf = new jsPDF('p', 'mm', 'a4');
-                    const canvas = await window.html2canvas(tempDiv, { scale: 2 });
+                    // Changed to landscape 'l'
+                    const pdf = new jsPDF('l', 'mm', 'a4');
+                    // Use a higher scale to get more content on one page, but also ensure layout is responsive
+                    const canvas = await window.html2canvas(tempDiv, { scale: 3, logging: true, useCORS: true });
                     const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
                     const imgWidth = canvas.width;
                     const imgHeight = canvas.height;
 
-                    const pdfPageWidth = pdf.internal.pageSize.getWidth();
-                    const pdfPageHeight = pdf.internal.pageSize.getHeight();
+                    const pdfPageWidth = pdf.internal.pageSize.getWidth(); // This will be 297mm for landscape A4
+                    const pdfPageHeight = pdf.internal.pageSize.getHeight(); // This will be 210mm for landscape A4
 
                     const widthRatio = pdfPageWidth / imgWidth;
                     const finalImgWidth = pdfPageWidth;
                     const finalImgHeight = imgHeight * widthRatio;
 
-                    let heightLeft = finalImgHeight;
-                    let position = 0;
+                    // Check if content fits on a single page based on calculated height
+                    if (finalImgHeight > pdfPageHeight) {
+                        // If it still overflows, try to adjust the image to fit one page by scaling down further.
+                        // This might make the text very small if there's a lot of content.
+                        const heightRatio = pdfPageHeight / finalImgHeight;
+                        const adjustedScale = widthRatio * heightRatio; // New scale to fit height
+                        const adjustedImgWidth = imgWidth * adjustedScale;
+                        const adjustedImgHeight = imgHeight * adjustedScale;
 
-                    pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
-                    heightLeft -= pdfPageHeight;
-
-                    while (heightLeft > 0) {
-                        position = heightLeft - finalImgHeight;
-                        pdf.addPage();
-                        pdf.addImage(imgData, 'JPEG', 0, position, finalImgWidth, finalImgHeight);
-                        heightLeft -= pdfPageHeight;
+                        pdf.addImage(imgData, 'JPEG', (pdfPageWidth - adjustedImgWidth) / 2, (pdfPageHeight - adjustedImgHeight) / 2, adjustedImgWidth, adjustedImgHeight);
+                        displayMessage('report-module-message-container', 'Reporte PDF generado y descargado correctamente. La información se ha escalado para ajustarse a una sola página.', 'success');
+                    } else {
+                        pdf.addImage(imgData, 'JPEG', 0, 0, finalImgWidth, finalImgHeight);
+                        displayMessage('report-module-message-container', 'Reporte PDF generado y descargado correctamente.', 'success');
                     }
 
                     pdf.save(`Reporte_Calificaciones_${student.fullName.replace(/\s+/g, '_')}.pdf`);
-                    displayMessage('report-module-message-container', 'Reporte PDF generado y descargado correctamente.', 'success');
+
                 } catch (error) {
                     console.error("Error al generar PDF individual:", error);
-                    displayMessage('report-module-message-container', 'Error al generar el reporte PDF.', 'error');
+                    displayMessage('report-module-message-container', 'Error al generar el reporte PDF. Asegúrate de que no haya demasiado contenido para una sola página.', 'error');
                 } finally {
                     if (document.body.contains(tempDiv)) {
                         document.body.removeChild(tempDiv);
