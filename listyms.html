@@ -1364,8 +1364,30 @@
                             <tbody>
                     `;
                     evalItem.scores.forEach(scoreItem => {
+                        // Determine background color based on level name
+                        let bgColorClass = '';
+                        switch (scoreItem.levelName) {
+                            case 'Previo al Inicio':
+                                bgColorClass = 'bg-orange-200'; // Lighter orange
+                                break;
+                            case 'Inicio':
+                                bgColorClass = 'bg-yellow-200'; // Lighter yellow
+                                break;
+                            case 'Proceso':
+                                bgColorClass = 'bg-green-200'; // Lighter green
+                                break;
+                            case 'Logrado':
+                                bgColorClass = 'bg-blue-200'; // Lighter blue
+                                break;
+                            case 'Destacado':
+                                bgColorClass = 'bg-blue-500 text-white'; // Darker blue with white text
+                                break;
+                            default:
+                                bgColorClass = 'bg-gray-100'; // Default
+                        }
+
                         criterionDetailsTable += `
-                            <tr>
+                            <tr class="${bgColorClass}">
                                 <td class="py-1 px-2 border-b text-gray-800">${scoreItem.criterionName}</td>
                                 <td class="py-1 px-2 border-b text-gray-800">${scoreItem.levelName}</td>
                                 <td class="py-1 px-2 border-b text-gray-800">${scoreItem.score}</td>
