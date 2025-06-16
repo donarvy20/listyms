@@ -1346,11 +1346,11 @@
 
                 // Order levels as per the image: Destacado, Logrado, En proceso, Inicio, Previo al inicio
                 const orderedLevels = [
-                    { name: 'Destacado', id: 'l5', score: 5, color: 'bg-[#0070c0]' }, // Darker blue
-                    { name: 'Logrado', id: 'l4', score: 4, color: 'bg-white' }, // No color in image
-                    { name: 'En proceso', id: 'l3', score: 3, color: 'bg-[#00b050]' }, // Green
-                    { name: 'Inicio', id: 'l2', score: 2, color: 'bg-[#ffc000]' }, // Orange/Yellow
-                    { name: 'Previo al inicio', id: 'l1', score: 1, color: 'bg-white' } // No color in image
+                    { name: 'Destacado', id: 'l5', score: 5, bgColorHex: '#0070c0' }, // Darker blue
+                    { name: 'Logrado', id: 'l4', score: 4, bgColorHex: '#ffffff' }, // White
+                    { name: 'En proceso', id: 'l3', score: 3, bgColorHex: '#00b050' }, // Green
+                    { name: 'Inicio', id: 'l2', score: 2, bgColorHex: '#ffc000' }, // Orange/Yellow
+                    { name: 'Previo al inicio', id: 'l1', score: 1, bgColorHex: '#ffffff' } // White
                 ];
 
                 let criterionRows = '';
@@ -1360,46 +1360,46 @@
 
                     orderedLevels.forEach(level => {
                         let cellContent = '';
-                        let bgColorClass = 'bg-white'; // Default white background
-                        let textColorClass = 'text-gray-800';
+                        let bgColorStyle = ''; // This will hold inline style for background color
+                        let textColorClass = 'text-gray-800'; // Default text color
 
                         // If the score for this criterion matches the current level being rendered
                         if (scoreItem.levelId === level.id) {
-                            cellContent = level.score; // Use the score from the orderedLevels as per image
-                            bgColorClass = level.color; // Use predefined color from orderedLevels
+                            cellContent = level.score;
+                            bgColorStyle = `background-color: ${level.bgColorHex};`;
 
-                            // Special case for Destacado to ensure white text on blue background
+                            // Adjust text color based on background for readability
                             if (level.name === 'Destacado') {
-                                textColorClass = 'text-white';
+                                textColorClass = 'text-white'; // White text on dark blue
                             } else if (level.name === 'En proceso' || level.name === 'Inicio') {
-                                textColorClass = 'text-black'; // Black text for green/yellow
+                                textColorClass = 'text-black'; // Black text on green/yellow
                             }
                         }
-                        criterionRows += `<td class="py-2 px-4 border border-gray-400 text-center ${bgColorClass} ${textColorClass}">${cellContent}</td>`;
+                        criterionRows += `<td class="py-2 px-4 border border-gray-400 text-center ${textColorClass}" style="${bgColorStyle}">${cellContent}</td>`;
                     });
                     criterionRows += `</tr>`;
                 });
 
                 // Determine background color for "Nivel de logro"
-                let qualitativeRatingBgClass = 'bg-white';
+                let qualitativeRatingBgStyle = 'background-color: #ffffff;';
                 let qualitativeRatingTextColorClass = 'text-gray-800';
                 switch (studentEvaluation.qualitativeRating) {
                     case 'Previo al Inicio':
-                        qualitativeRatingBgClass = 'bg-white';
+                        qualitativeRatingBgStyle = 'background-color: #ffffff;';
                         break;
                     case 'Inicio':
-                        qualitativeRatingBgClass = 'bg-[#ffc000]';
+                        qualitativeRatingBgStyle = 'background-color: #ffc000;';
                         qualitativeRatingTextColorClass = 'text-black';
                         break;
                     case 'Proceso':
-                        qualitativeRatingBgClass = 'bg-[#00b050]';
+                        qualitativeRatingBgStyle = 'background-color: #00b050;';
                         qualitativeRatingTextColorClass = 'text-black';
                         break;
                     case 'Logrado':
-                        qualitativeRatingBgClass = 'bg-white';
+                        qualitativeRatingBgStyle = 'background-color: #ffffff;';
                         break;
                     case 'Destacado':
-                        qualitativeRatingBgClass = 'bg-[#0070c0]';
+                        qualitativeRatingBgStyle = 'background-color: #0070c0;';
                         qualitativeRatingTextColorClass = 'text-white';
                         break;
                 }
@@ -1431,7 +1431,7 @@
                     <div class="mt-8 text-base text-gray-800 leading-relaxed">
                         <p><span class="font-bold">Puntaje Total :</span> ${studentEvaluation.totalScore.toFixed(2)}</p>
                         <p><span class="font-bold">Promedio :</span> ${studentEvaluation.average.toFixed(2)}</p>
-                        <p><span class="font-bold">Nivel de logro :</span> <span class="inline-block px-3 py-1 rounded-md font-semibold ${qualitativeRatingBgClass} ${qualitativeRatingTextColorClass}">${studentEvaluation.qualitativeRating}</span></p>
+                        <p><span class="font-bold">Nivel de logro :</span> <span class="inline-block px-3 py-1 rounded-md font-semibold ${qualitativeRatingTextColorClass}" style="${qualitativeRatingBgStyle}">${studentEvaluation.qualitativeRating}</span></p>
                     </div>
                 `;
 
