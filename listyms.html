@@ -1319,9 +1319,10 @@
 
                 displayMessage('report-module-message-container', `Generando reporte para ${student.fullName}, por favor espera...`, 'info');
 
-                const studentEvaluations = evaluations.filter(e => e.studentId === student.id);
+                // Find the first evaluation for this student. The image implies a single report per student.
+                const studentEvaluation = evaluations.find(e => e.studentId === student.id);
 
-                if (studentEvaluations.length === 0) {
+                if (!studentEvaluation) {
                     displayMessage('report-module-message-container', `No hay calificaciones para ${student.fullName}.`, 'error');
                     return;
                 }
@@ -1329,113 +1330,107 @@
                 const pdfContentId = 'individual-pdf-content';
                 let tempDiv = document.createElement('div');
                 tempDiv.id = pdfContentId;
-                tempDiv.style.padding = '10mm'; // Adjust padding slightly for better fit if needed
-                tempDiv.style.width = '280mm'; // A4 Landscape width - margins
+                tempDiv.style.padding = '20mm'; // More padding to match the blank space in the image
+                tempDiv.style.width = '297mm'; // A4 Landscape width
                 tempDiv.style.boxSizing = 'border-box';
-                tempDiv.className = 'bg-white rounded-lg shadow-lg text-sm';
+                tempDiv.className = 'bg-white text-base'; // Adjust text size for better fit
 
-                let evaluationsDetailsHtml = '';
+                // Retrieve the checklist associated with this evaluation to get the correct level names and order
+                const currentChecklistForEval = checklists.find(cl => cl.id === studentEvaluation.checklistId);
+                if (!currentChecklistForEval) {
+                    console.warn(`Checklist with ID ${studentEvaluation.checklistId} not found for evaluation.`);
+                    displayMessage('report-module-message-container', `Error: Lista de cotejo no encontrada para la evaluación del estudiante ${student.fullName}.`, 'error');
+                    return;
+                }
 
-                studentEvaluations.forEach(evalItem => {
-                    // Find the checklist associated with this evaluation to get the correct level names and order
-                    const currentChecklistForEval = checklists.find(cl => cl.id === evalItem.checklistId);
-                    if (!currentChecklistForEval) {
-                        console.warn(`Checklist with ID ${evalItem.checklistId} not found for evaluation.`);
-                        return;
-                    }
+                // Order levels as per the image: Destacado, Logrado, En proceso, Inicio, Previo al inicio
+                const orderedLevels = [
+                    { name: 'Destacado', id: 'l5', color: 'bg-[#0070c0]' }, // Darker blue
+                    { name: 'Logrado', id: 'l4', color: 'bg-white' }, // No color in image
+                    { name: 'Proceso', id: 'l3', color: 'bg-[#00b050]' }, // Green
+                    { name: 'Inicio', id: 'l2', color: 'bg-[#ffc000]' }, // Orange/Yellow
+                    { name: 'Previo al Inicio', id: 'l1', color: 'bg-white' } // No color in image
+                ];
 
-                    // Order levels as per the image: Destacado, Logrado, En proceso, Inicio, Previo al inicio
-                    const orderedLevels = [
-                        { name: 'Destacado', id: 'l5', color: 'bg-blue-500' },
-                        { name: 'Logrado', id: 'l4', color: 'bg-blue-200' },
-                        { name: 'Proceso', id: 'l3', color: 'bg-green-200' },
-                        { name: 'Inicio', id: 'l2', color: 'bg-yellow-200' },
-                        { name: 'Previo al Inicio', id: 'l1', color: 'bg-orange-200' }
-                    ];
+                let criterionRows = '';
+                studentEvaluation.scores.forEach(scoreItem => {
+                    criterionRows += `<tr>`;
+                    criterionRows += `<td class="py-2 px-4 border border-gray-400 text-gray-800 text-left font-semibold align-top">${scoreItem.criterionName}</td>`;
 
-                    let criterionRows = '';
-                    evalItem.scores.forEach(scoreItem => {
-                        criterionRows += `<tr>`;
-                        criterionRows += `<td class="py-1 px-2 border border-gray-300 text-gray-800 text-left font-semibold">${scoreItem.criterionName}</td>`;
-                        
-                        orderedLevels.forEach(level => {
-                            let cellContent = '';
-                            let bgColorClass = 'bg-white'; // Default white background
-                            if (scoreItem.levelId === level.id) {
-                                cellContent = scoreItem.score;
-                                bgColorClass = level.color; // Use predefined color from orderedLevels
-                                // Special case for Destacado to ensure white text on blue background
-                                if (level.name === 'Destacado') {
-                                    bgColorClass += ' text-white';
-                                }
+                    orderedLevels.forEach(level => {
+                        let cellContent = '';
+                        let bgColorClass = 'bg-white'; // Default white background
+                        let textColorClass = 'text-gray-800';
+
+                        if (scoreItem.levelId === level.id) {
+                            cellContent = scoreItem.score;
+                            bgColorClass = level.color; // Use predefined color from orderedLevels
+
+                            // Special case for Destacado to ensure white text on blue background
+                            if (level.name === 'Destacado') {
+                                textColorClass = 'text-white';
+                            } else if (level.name === 'En proceso' || level.name === 'Inicio') {
+                                textColorClass = 'text-black'; // Black text for green/yellow
                             }
-                            criterionRows += `<td class="py-1 px-2 border border-gray-300 text-center ${bgColorClass}">${cellContent}</td>`;
-                        });
-                        criterionRows += `</tr>`;
+                        }
+                        criterionRows += `<td class="py-2 px-4 border border-gray-400 text-center ${bgColorClass} ${textColorClass}">${cellContent}</td>`;
                     });
-
-                    // Add row for total score, average, and qualitative rating
-                    let qualitativeRatingBgClass = 'bg-white';
-                    switch (evalItem.qualitativeRating) {
-                        case 'Previo al Inicio':
-                            qualitativeRatingBgClass = 'bg-orange-200';
-                            break;
-                        case 'Inicio':
-                            qualitativeRatingBgClass = 'bg-yellow-200';
-                            break;
-                        case 'Proceso':
-                            qualitativeRatingBgClass = 'bg-green-200';
-                            break;
-                        case 'Logrado':
-                            qualitativeRatingBgClass = 'bg-blue-200';
-                            break;
-                        case 'Destacado':
-                            qualitativeRatingBgClass = 'bg-blue-500 text-white';
-                            break;
-                    }
-
-                    evaluationsDetailsHtml += `
-                        <div class="mb-6 p-4 border border-gray-300 rounded-md bg-gray-50">
-                            <h4 class="text-md font-semibold mb-2 text-gray-700">Lista de Cotejo: ${evalItem.checklistName} (Fecha: ${evalItem.date})</h4>
-                            <table class="min-w-full text-xs border-collapse">
-                                <thead>
-                                    <tr class="bg-gray-200">
-                                        <th class="py-2 px-4 border border-gray-300 text-left font-semibold text-gray-700">Criterios</th>
-                                        ${orderedLevels.map(level => `<th class="py-2 px-4 border border-gray-300 text-center font-semibold text-gray-700">${level.name}</th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${criterionRows}
-                                    <tr>
-                                        <td class="py-2 px-4 border border-gray-300 text-left font-bold text-gray-800">Puntaje Total:</td>
-                                        <td colspan="${orderedLevels.length}" class="py-2 px-4 border border-gray-300 text-center font-bold text-gray-800">${evalItem.totalScore.toFixed(1)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-2 px-4 border border-gray-300 text-left font-bold text-gray-800">Promedio:</td>
-                                        <td colspan="${orderedLevels.length}" class="py-2 px-4 border border-gray-300 text-center font-bold text-gray-800">${evalItem.average.toFixed(1)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-2 px-4 border border-gray-300 text-left font-bold text-gray-800">Nivel de logro:</td>
-                                        <td colspan="${orderedLevels.length}" class="py-2 px-4 border border-gray-300 text-center font-bold text-gray-800 ${qualitativeRatingBgClass}">${evalItem.qualitativeRating}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
+                    criterionRows += `</tr>`;
                 });
 
+                // Determine background color for "Nivel de logro"
+                let qualitativeRatingBgClass = 'bg-white';
+                let qualitativeRatingTextColorClass = 'text-gray-800';
+                switch (studentEvaluation.qualitativeRating) {
+                    case 'Previo al Inicio':
+                        qualitativeRatingBgClass = 'bg-white';
+                        break;
+                    case 'Inicio':
+                        qualitativeRatingBgClass = 'bg-[#ffc000]';
+                        qualitativeRatingTextColorClass = 'text-black';
+                        break;
+                    case 'Proceso':
+                        qualitativeRatingBgClass = 'bg-[#00b050]';
+                        qualitativeRatingTextColorClass = 'text-black';
+                        break;
+                    case 'Logrado':
+                        qualitativeRatingBgClass = 'bg-white';
+                        break;
+                    case 'Destacado':
+                        qualitativeRatingBgClass = 'bg-[#0070c0]';
+                        qualitativeRatingTextColorClass = 'text-white';
+                        break;
+                }
+
                 tempDiv.innerHTML = `
-                    <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Reporte de Calificaciones Individual</h2>
-                    <div class="mb-4 text-sm text-gray-600 text-left">
-                        ${basicData.institutionName ? `<p><span class="font-semibold">Institución:</span> ${basicData.institutionName}</p>` : ''}
-                        ${basicData.courseName ? `<p><span class="font-semibold">Curso:</span> ${basicData.courseName}</p>` : ''}
-                        ${basicData.teacherName ? `<p><span class="font-semibold">Docente:</span> ${basicData.teacherName}</p>` : ''}
-                        ${basicData.date ? `<p><span class="font-semibold">Fecha del Reporte:</span> ${basicData.date}</p>` : ''}
-                        ${basicData.learningSessionName ? `<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span> "${basicData.learningSessionName}"</p>` : ''}
-                        <p><span class="font-semibold">Grupo:</span> ${student.group || 'Sin Grupo'}</p>
+                    <h2 class="text-2xl font-bold mb-8 text-gray-800 text-center">Reporte de Calificaciones</h2>
+                    <div class="mb-6 text-base text-gray-700 leading-relaxed">
+                        ${basicData.institutionName ? `<p><span class="font-semibold">Institución:</span> ${basicData.institutionName}</p>` : '<p><span class="font-semibold">Institución:</span></p>'}
+                        ${basicData.courseName ? `<p><span class="font-semibold">Curso:</span> ${basicData.courseName}</p>` : '<p><span class="font-semibold">Curso:</span></p>'}
+                        ${basicData.teacherName ? `<p><span class="font-semibold">Docente:</span> ${basicData.teacherName}</p>` : '<p><span class="font-semibold">Docente:</span></p>'}
+                        ${basicData.date ? `<p><span class="font-semibold">Fecha del Reporte:</span> ${basicData.date}</p>` : '<p><span class="font-semibold">Fecha del Reporte:</span></p>'}
+                        ${basicData.learningSessionName ? `<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span> ${basicData.learningSessionName}</p>` : '<p><span class="font-semibold">Nombre de la Sesión de Aprendizaje:</span></p>'}
+                        <p><span class="font-semibold">Grupo:</span> ${student.group || ''}</p>
+                        <p><span class="font-semibold">Estudiante:</span> ${student.fullName}</p>
                     </div>
-                    <h3 class="text-xl font-semibold mb-4 text-gray-700">Estudiante: ${student.fullName}</h3>
-                    ${evaluationsDetailsHtml}
+
+                    <table class="w-full text-base border-collapse border border-gray-400 mt-8">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="py-3 px-4 border border-gray-400 text-left font-semibold text-gray-700 w-1/3">Criterios</th>
+                                ${orderedLevels.map(level => `<th class="py-3 px-4 border border-gray-400 text-center font-semibold text-gray-700">${level.name}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${criterionRows}
+                        </tbody>
+                    </table>
+
+                    <div class="mt-8 text-base text-gray-800 leading-relaxed">
+                        <p><span class="font-bold">Puntaje Total :</span> ${studentEvaluation.totalScore.toFixed(2)}</p>
+                        <p><span class="font-bold">Promedio :</span> ${studentEvaluation.average.toFixed(2)}</p>
+                        <p><span class="font-bold">Nivel de logro :</span> <span class="inline-block px-3 py-1 rounded-md font-semibold ${qualitativeRatingBgClass} ${qualitativeRatingTextColorClass}">${studentEvaluation.qualitativeRating}</span></p>
+                    </div>
                 `;
 
                 document.body.appendChild(tempDiv);
@@ -1443,7 +1438,7 @@
                 try {
                     const jsPDF = window.jspdf.jsPDF || window.jspdf.default || window.jsPDF;
                     const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape A4
-                    const canvas = await window.html2canvas(tempDiv, { scale: 3, logging: true, useCORS: true });
+                    const canvas = await window.html2canvas(tempDiv, { scale: 3, logging: true, useCORS: true, backgroundColor: '#ffffff' }); // Ensure white background
                     const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
                     const imgWidth = canvas.width;
@@ -1456,21 +1451,20 @@
                     const finalImgWidth = pdfPageWidth;
                     const finalImgHeight = imgHeight * widthRatio;
 
-                    // Calculate a target scale to fit content into a single page or determine if multiple pages are needed
-                    const targetScale = Math.min(pdfPageWidth / imgWidth, pdfPageHeight / imgHeight);
+                    // This calculation is to ensure it fits on one page in landscape
+                    // If the content is taller than the PDF page, it will be scaled down.
+                    const desiredScale = Math.min(pdfPageWidth / imgWidth, pdfPageHeight / imgHeight);
+                    const finalRenderWidth = imgWidth * desiredScale;
+                    const finalRenderHeight = imgHeight * desiredScale;
 
-                    if (finalImgHeight > pdfPageHeight) {
-                        // If content still overflows height after scaling to page width, adjust scale to fit height as well
-                        const adjustedImgWidth = imgWidth * targetScale;
-                        const adjustedImgHeight = imgHeight * targetScale;
-                        pdf.addImage(imgData, 'JPEG', (pdfPageWidth - adjustedImgWidth) / 2, (pdfPageHeight - adjustedImgHeight) / 2, adjustedImgWidth, adjustedImgHeight);
-                        displayMessage('report-module-message-container', 'Reporte PDF generado y descargado correctamente. La información se ha escalado para ajustarse a una sola página.', 'success');
-                    } else {
-                        pdf.addImage(imgData, 'JPEG', 0, 0, finalImgWidth, finalImgHeight);
-                        displayMessage('report-module-message-container', 'Reporte PDF generado y descargado correctamente.', 'success');
-                    }
+                    // Center the image on the PDF page
+                    const xOffset = (pdfPageWidth - finalRenderWidth) / 2;
+                    const yOffset = (pdfPageHeight - finalRenderHeight) / 2;
+
+                    pdf.addImage(imgData, 'JPEG', xOffset, yOffset, finalRenderWidth, finalRenderHeight);
 
                     pdf.save(`Reporte_Calificaciones_${student.fullName.replace(/\s+/g, '_')}.pdf`);
+                    displayMessage('report-module-message-container', 'Reporte PDF generado y descargado correctamente.', 'success');
 
                 } catch (error) {
                     console.error("Error al generar PDF individual:", error);
@@ -1540,9 +1534,9 @@
                                 overallQualitativeRating = 'Previo al Inicio';
                             } else if (overallAverage >= 2 && overallAverage < 3) {
                                 overallQualitativeRating = 'Inicio';
-                            } else if (overallAverage >= 3 && overallAverage < 4) {
+                            } else if (overallAverage >= 3 && average < 4) {
                                 overallQualitativeRating = 'Proceso';
-                            } else if (overallAverage >= 4 && overallAverage < 5) {
+                            } else if (overallAverage >= 4 && average < 5) {
                                 overallQualitativeRating = 'Logrado';
                             } else if (overallAverage === 5) {
                                 overallQualitativeRating = 'Destacado';
