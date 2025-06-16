@@ -1523,24 +1523,32 @@
                         let overallQualitativeRating = 'N/A';
                         let totalEvaluations = studentEvaluations.length;
 
+                        console.log(`--- Procesando Estudiante: ${student.fullName} (ID: ${student.id}) ---`);
+                        console.log(`Evaluaciones encontradas para este estudiante: ${totalEvaluations}`);
+
                         if (totalEvaluations > 0) {
-                            const sumOfAverages = studentEvaluations.reduce((sum, evalItem) => sum + evalItem.average, 0);
+                            let sumOfAverages = 0;
+                            studentEvaluations.forEach((evalItem, index) => {
+                                console.log(`  Eval ${index + 1} (Lista: ${evalItem.checklistName}): promedio = ${evalItem.average}`);
+                                sumOfAverages += evalItem.average;
+                            });
                             overallAverage = sumOfAverages / totalEvaluations;
-                            console.log(`Student: ${student.fullName}, Sum of Averages: ${sumOfAverages}, Total Evaluations: ${totalEvaluations}, Overall Average: ${overallAverage}`);
+                            console.log(`  Suma de promedios individuales de evaluación: ${sumOfAverages}`);
+                            console.log(`  Promedio General Calculado: ${overallAverage}`);
 
                             if (overallAverage >= 0 && overallAverage < 2) {
                                 overallQualitativeRating = 'Previo al Inicio';
                             } else if (overallAverage >= 2 && overallAverage < 3) {
                                 overallQualitativeRating = 'Inicio';
-                            } else if (overallAverage >= 3 && overallAverage < 4) { // Corrected: use overallAverage
+                            } else if (overallAverage >= 3 && overallAverage < 4) {
                                 overallQualitativeRating = 'Proceso';
-                            } else if (overallAverage >= 4 && overallAverage < 5) { // Corrected: use overallAverage
+                            } else if (overallAverage >= 4 && overallAverage < 5) {
                                 overallQualitativeRating = 'Logrado';
                             } else if (overallAverage === 5) {
                                 overallQualitativeRating = 'Destacado';
                             }
                         }
-                        console.log(`Student: ${student.fullName}, Final Overall Average: ${overallAverage.toFixed(1)}, Qualitative Rating: ${overallQualitativeRating}`);
+                        console.log(`Resultado final para ${student.fullName}: Promedio General: ${overallAverage.toFixed(1)}, Calificación Cualitativa: ${overallQualitativeRating}`);
 
                         summaryTableRows += `
                             <tr class="hover:bg-gray-50">
