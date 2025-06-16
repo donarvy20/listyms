@@ -1344,13 +1344,13 @@
                     return;
                 }
 
-                // Order levels as per the image: Destacado, Logrado, En proceso, Inicio, Previo al inicio
+                // Order levels as per the image with specific header colors and text colors
                 const orderedLevels = [
-                    { name: 'Destacado', id: 'l5', score: 5, bgColorHex: '#0070c0' }, // Darker blue
-                    { name: 'Logrado', id: 'l4', score: 4, bgColorHex: '#ffffff' }, // White
-                    { name: 'En proceso', id: 'l3', score: 3, bgColorHex: '#00b050' }, // Green
-                    { name: 'Inicio', id: 'l2', score: 2, bgColorHex: '#ffc000' }, // Orange/Yellow
-                    { name: 'Previo al inicio', id: 'l1', score: 1, bgColorHex: '#ffffff' } // White
+                    { name: 'Destacado', id: 'l5', score: 5, headerBgColorHex: '#0070c0', headerTextColorClass: 'text-white' }, // Blue
+                    { name: 'Logrado', id: 'l4', score: 4, headerBgColorHex: '#ADD8E6', headerTextColorClass: 'text-black' }, // Light Blue (Celeste)
+                    { name: 'En proceso', id: 'l3', score: 3, headerBgColorHex: '#00b050', headerTextColorClass: 'text-black' }, // Green
+                    { name: 'Inicio', id: 'l2', score: 2, headerBgColorHex: '#ffc000', headerTextColorClass: 'text-black' }, // Light Orange
+                    { name: 'Previo al inicio', id: 'l1', score: 1, headerBgColorHex: '#FF4500', headerTextColorClass: 'text-white' } // Orange Red
                 ];
 
                 let criterionRows = '';
@@ -1360,27 +1360,19 @@
 
                     orderedLevels.forEach(level => {
                         let cellContent = '';
-                        let bgColorStyle = ''; // This will hold inline style for background color
-                        let textColorClass = 'text-gray-800'; // Default text color
+                        let textColorClass = 'text-gray-800'; // Default text color for cell content
 
-                        // If the score for this criterion matches the current level being rendered
+                        // Only put the score in the cell that matches the evaluated level for this criterion
                         if (scoreItem.levelId === level.id) {
                             cellContent = level.score;
-                            bgColorStyle = `background-color: ${level.bgColorHex};`;
-
-                            // Adjust text color based on background for readability
-                            if (level.name === 'Destacado') {
-                                textColorClass = 'text-white'; // White text on dark blue
-                            } else if (level.name === 'En proceso' || level.name === 'Inicio') {
-                                textColorClass = 'text-black'; // Black text on green/yellow
-                            }
                         }
-                        criterionRows += `<td class="py-2 px-4 border border-gray-400 text-center ${textColorClass}" style="${bgColorStyle}">${cellContent}</td>`;
+                        // Cell backgrounds are now explicitly NOT set, only content goes in.
+                        criterionRows += `<td class="py-2 px-4 border border-gray-400 text-center ${textColorClass}">${cellContent}</td>`;
                     });
                     criterionRows += `</tr>`;
                 });
 
-                // Determine background color for "Nivel de logro"
+                // Determine background color for "Nivel de logro" (outside the table)
                 let qualitativeRatingBgStyle = 'background-color: #ffffff;';
                 let qualitativeRatingTextColorClass = 'text-gray-800';
                 switch (studentEvaluation.qualitativeRating) {
@@ -1420,7 +1412,10 @@
                         <thead>
                             <tr class="bg-gray-200">
                                 <th class="py-3 px-4 border border-gray-400 text-left font-semibold text-gray-700 w-1/3">Criterios</th>
-                                ${orderedLevels.map(level => `<th class="py-3 px-4 border border-gray-400 text-center font-semibold text-gray-700">${level.name}</th>`).join('')}
+                                ${orderedLevels.map(level => `
+                                    <th class="py-3 px-4 border border-gray-400 text-center font-semibold ${level.headerTextColorClass}" style="background-color: ${level.headerBgColorHex};">
+                                        ${level.name}
+                                    </th>`).join('')}
                             </tr>
                         </thead>
                         <tbody>
@@ -1536,9 +1531,9 @@
                                 overallQualitativeRating = 'Previo al Inicio';
                             } else if (overallAverage >= 2 && overallAverage < 3) {
                                 overallQualitativeRating = 'Inicio';
-                            } else if (overallAverage >= 3 && average < 4) {
+                            } else if (overallAverage >= 3 && overallAverage < 4) {
                                 overallQualitativeRating = 'Proceso';
-                            } else if (overallAverage >= 4 && average < 5) {
+                            } else if (overallAverage >= 4 && overallAverage < 5) {
                                 overallQualitativeRating = 'Logrado';
                             } else if (overallAverage === 5) {
                                 overallQualitativeRating = 'Destacado';
@@ -1580,12 +1575,18 @@
                     `;
 
                     document.body.appendChild(tempDiv);
+                    console.log('tempDiv appended to body for summary report. Content:', tempDiv.innerHTML.substring(0, 500) + '...'); // Log a snippet of the content
 
                     try {
+                        console.log('Calling html2canvas for summary report...');
                         const jsPDF = window.jspdf.jsPDF || window.jspdf.default || window.jsPDF;
-                        const pdf = new jsPDF('p', 'mm', 'a4');
                         const canvas = await window.html2canvas(tempDiv, { scale: 2 });
+                        console.log('html2canvas completed for summary report. Canvas:', canvas);
                         const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                        console.log('Image data generated for summary report.');
+
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        console.log('jsPDF instance created for summary report.');
 
                         const imgWidth = canvas.width;
                         const imgHeight = canvas.height;
@@ -1612,12 +1613,14 @@
 
                         pdf.save(`Reporte_Resumen_Evaluaciones_${currentGroupName.replace(/\s+/g, '_')}.pdf`);
                         await new Promise(resolve => setTimeout(resolve, 500));
+                        displayMessage('report-module-message-container', `Reporte resumen PDF para el grupo "${currentGroupName}" generado y descargado correctamente.`, 'success');
                     } catch (error) {
                         console.error(`Error al generar reporte resumen PDF para el grupo ${currentGroupName}:`, error);
-                        displayMessage('report-module-message-container', `Error al generar el reporte resumen PDF para el grupo "${currentGroupName}".`, 'error');
+                        displayMessage('report-module-message-container', `Error al generar el reporte resumen PDF para el grupo "${currentGroupName}". Detalles: ${error.message}`, 'error');
                     } finally {
                         if (document.body.contains(tempDiv)) {
                             document.body.removeChild(tempDiv);
+                            console.log('tempDiv removed from body for summary report.');
                         }
                     }
                 }
