@@ -1320,6 +1320,7 @@
                 displayMessage('report-module-message-container', `Generando reporte para ${student.fullName}, por favor espera...`, 'info');
 
                 // Find the first evaluation for this student. The image implies a single report per student.
+                // If a student has multiple evaluations (e.g., with different checklists), this will pick the first one.
                 const studentEvaluation = evaluations.find(e => e.studentId === student.id);
 
                 if (!studentEvaluation) {
@@ -1345,11 +1346,11 @@
 
                 // Order levels as per the image: Destacado, Logrado, En proceso, Inicio, Previo al inicio
                 const orderedLevels = [
-                    { name: 'Destacado', id: 'l5', color: 'bg-[#0070c0]' }, // Darker blue
-                    { name: 'Logrado', id: 'l4', color: 'bg-white' }, // No color in image
-                    { name: 'Proceso', id: 'l3', color: 'bg-[#00b050]' }, // Green
-                    { name: 'Inicio', id: 'l2', color: 'bg-[#ffc000]' }, // Orange/Yellow
-                    { name: 'Previo al Inicio', id: 'l1', color: 'bg-white' } // No color in image
+                    { name: 'Destacado', id: 'l5', score: 5, color: 'bg-[#0070c0]' }, // Darker blue
+                    { name: 'Logrado', id: 'l4', score: 4, color: 'bg-white' }, // No color in image
+                    { name: 'En proceso', id: 'l3', score: 3, color: 'bg-[#00b050]' }, // Green
+                    { name: 'Inicio', id: 'l2', score: 2, color: 'bg-[#ffc000]' }, // Orange/Yellow
+                    { name: 'Previo al inicio', id: 'l1', score: 1, color: 'bg-white' } // No color in image
                 ];
 
                 let criterionRows = '';
@@ -1362,8 +1363,9 @@
                         let bgColorClass = 'bg-white'; // Default white background
                         let textColorClass = 'text-gray-800';
 
+                        // If the score for this criterion matches the current level being rendered
                         if (scoreItem.levelId === level.id) {
-                            cellContent = scoreItem.score;
+                            cellContent = level.score; // Use the score from the orderedLevels as per image
                             bgColorClass = level.color; // Use predefined color from orderedLevels
 
                             // Special case for Destacado to ensure white text on blue background
